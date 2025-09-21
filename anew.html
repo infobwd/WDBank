@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attendance Management</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+  <script src="https://cdn.rawgit.com/loadingio/ldcover/0.2.0/dist/loading.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.rawgit.com/loadingio/ldcover/0.2.0/dist/loading.min.css">
+</head>
+<body>
+  <form id="attendance-form">
+    <label for="attendance-date">Date:</label>
+    <input type="date" id="attendance-date" required>
+    <div id="student-list"></div>
+    <button type="submit">Save Attendance</button>
+  </form>
+  <div id="existing-records"></div>
+  <button id="send-summary">Send Summary</button>
+  <button id="check-all-present">Mark All Present</button>
+  <button id="check-all-absent">Mark All Absent</button>
+  <button id="check-all-leave">Mark All Leave</button>
+  <button id="check-all-late">Mark All Late</button>
+
+  <script>
+    let attendanceRecords = [];
+    const studentListUrl = 'https://opensheet.elk.sh/1zjd0GQUbgAfGR1tB9Jw9GXCLJorUPUoJFRxaGD49p4U/Name'; // จุดแก้ที่ 1
+
+    window.onload = function() {
+      // Initialize LIFF app with login required
+      liff.init({ liffId: '2005230346-ROG633Qj' }) // จุดแก้ที่ 2
+        .then(() => {
+          if (!liff.isLoggedIn()) {
+            liff.login();
+          } else {
+            console.log('LIFF initialized');
+            // Fetch student list and generate form
+            fetchStudentList();
+            // Add event listeners
+            document.getElementById('attendance-form').addEventListener('submit', addAttendanceRecord);
+            document.getElementById('send-summary').addEventListener('click', sendSummary);
+            document.getElementById('check-all-present').addEventListener('click', () => checkAll('มา'));
+            document.getElementById('check-all-absent').addEventListener('click', () => checkAll('ขาด'));
+            document.getElementById('check-all-leave').addEventListener('click', () => checkAll('ลา'));
+            document.getElementById('check-all-late').addEventListener('click', () => checkAll('สาย'));
+          }
+        })
+        .catch((err) => {
+          console.error('Error initializing LIFF: ', err);
+          Swal.fire('Error', 'Failed to initialize LIFF: ' + err, 'error');
+        });
+      
+      // Get current date
+      const today = new Date();
+      // Convert to Thai Buddhist calendar (พ.ศ.)
+      const thaiYear = today.getFullYear() + 543;
+      // Convert to Bangkok time zone (UTC+7)
+      const bangkokTime = new Date(today.setHours(today.getHours() + 7));
+      // Format date as yyyy-mm-dd (input[type="date"] format)
+      const formattedDate = bangkokTime.toISOString().split('T')[0];
+      // Set input value to current date
+      const attendanceDateInput = document.getElementById('attendance-date');
+      attendanceDateInput.value = formattedDate;
+      attendanceDateInput.addEventListener('change', fetchStudentList);
+
+      // Fetch student list and records for the current date
+      fetchStudentList();
+    };
+
+    function fetchStudentList() {
+      const dateInput = document.getElementById('attendance-date').value;
+      fetch(studentListUrl)
+        .then(response => response.json())
+        .then(data => {
+          generateStudentList(data);
+          fetchExistingRecords(dateInput);
+        })
+        .catch(error => {
+          console.error('Error fetching student list: ', error);
+          Swal.fire('Error', 'Failed to fetch student list: ' + error, 'error');
+        });
+    }
+
+    function fetchExistingRecords(date) {
+      fetch(`https://script.google.com/macros/s/AKfycbxOkGeemo3XeeZxXJhp02p8exaxQWy8Fgsc8145zfipJsw5u-rkwvBbsK5HQ1Xh08gs/exec?action=read&date=${date}`) // Replace with your Google Script URL
+        .then(response => response.json())
+        .then(data => {
+          attendanceRecords = data.records;
+          displayExistingRecords(attendanceRecords);
+        })
+        .catch(error => {
+          console.error('Error fetching attendance records: ', error);
+          Swal.fire('Error', 'Failed to fetch attendance records: ' + error, 'error');
+        });
+    }
+
+    function generateStudentList(students) {
+      const studentList = document.getElementById('student-list');
+      studentList.innerHTML = ''; // Clear the list before generating
+      students.forEach(student => {
+        const studentRow = document.createElement('div');
+        studentRow.className = 'row mb-3';
+        studentRow.innerHTML = `
+          <div class="col-1" style="display: none;"></div>
+          <div class="col-6">
+            <label hidden class="form-label">${student['เลขที่']}</label>
+            <label class="form-label2">${student['รายชื่อนักเรียน']}</label>
+            <label hidden class="form-label3">${student['ชั้น']}</label>
+          </div>
+          <div class="col-1">
+            <label><input type="radio" name="student${student['เลขที่']}" value="มาเช้า" required> มาเช้า</label>
+          </div>
+          <div class="col-1">
+            <label><input type="radio" name="student${student['เลขที่']}" value="มา" required> มา</label>
+          </div>
+          <div class="col-1">
+            <label><input type="radio" name="student${student['เลขที่']}" value="ขาด" required> ขาด</label>
+          </div>
+          <div class="col-1">
+            <label><input type="radio" name="student${student['เลขที่']}" value="ลา" required> ลา</label>
+          </div>
+          <div class="col-1">
+            <label><input type="radio" name="student${student['เลขที่']}" value="สาย" required> สาย</label>
+          </div>
+        `;
+        studentList.appendChild(studentRow);
+      });
+    }
+
+    function displayExistingRecords(records) {
+      const recordsContainer = document.getElementById('existing-records');
+      recordsContainer.innerHTML = '';
+      records.forEach(record => {
+        const recordRow = document.createElement('div');
+        recordRow.className = 'record-row';
+        recordRow.innerHTML = `
+          <div>${record.date}</div>
+          <div>${record.numm}</div>
+          <div>${record.name}</div>
+          <div>${record.classroom}</div>
+          <div>${record.status}</div>
+          <button onclick="editRecord('${record.date}', '${record.numm}')">Edit</button>
+          <button onclick="deleteRecord('${record.date}', '${record.numm}')">Delete</button>
+        `;
+        recordsContainer.appendChild(recordRow);
+      });
+    }
+
+    function checkAll(status) {
+      const studentList = document.getElementById('student-list');
+      const radios = studentList.querySelectorAll(`input[value="${status}"]`);
+      radios.forEach(radio => radio.checked = true);
+    }
+
+    function addAttendanceRecord(event) {
+      event.preventDefault();
+      const datestudentInput = document.getElementById('attendance-date').value;
+      const datestudentObj = new Date(datestudentInput);
+      const thaiYear = datestudentObj.getFullYear() + 543;
+      const formattedDate = `${datestudentObj.getDate()}/${datestudentObj.getMonth() + 1}/${thaiYear}`;
+
+      const existingRecord = attendanceRecords.find(record => record.date === formattedDate);
+      if (existingRecord) {
+        Swal.fire('Error', 'Attendance for this date already exists. Please update the record instead.', 'error');
+        return;
+      }
+
+      attendanceRecords = [];
+      let allSelected = true;
+
+      const studentList = document.getElementById('student-list');
+      const studentRows = studentList.querySelectorAll('.row');
+
+      studentRows.forEach(row => {
+        const studentNum = row.querySelector('.form-label').innerText.replace(/:$/, '');
+        const studentName = row.querySelector('.form-label2').innerText.replace(/:$/, '');
+        const studentStatusElement = row.querySelector('input:checked');
+        const studentclassroom = row.querySelector('.form-label3').innerText.replace(/:$/, '');
+
+        if (studentStatusElement) {
+          const studentStatus = studentStatusElement.value;
+          attendanceRecords.push({ date: formattedDate, numm: studentNum, name: studentName, classroom: studentclassroom, status: studentStatus });
+        } else {
+          allSelected = false;
+        }
+      });
+
+      if (allSelected) {
+        saveToSheet(attendanceRecords);
+      } else {
+        Swal.fire('Error', 'Please fill in the attendance status for all students!', 'error');
+      }
+    }
+
+    function saveToSheet(records) {
+      $.LoadingOverlay("show");
+
+      const url = 'https://script.google.com/macros/s/AKfycbxOkGeemo3XeeZxXJhp02p8exaxQWy8Fgsc8145zfipJsw5u-rkwvBbsK5HQ1Xh08gs/exec'; // จุดแก้ที่ 3
+
+      $.post(url, JSON.stringify({ action: 'save', records: records }), function(data) {
+        $.LoadingOverlay("hide");
+        if (data.status === 'success') {
+          Swal.fire('Success', 'Attendance data saved successfully', 'success');
+          fetchStudentList(); // Refresh the list
+        } else {
+          Swal.fire('Error', 'Failed to save attendance data!', 'error');
+        }
+      }).fail(function() {
+        $.LoadingOverlay("hide");
+        Swal.fire('Error', 'Failed to connect to the server!', 'error');
+      });
+    }
+
+    function editRecord(date, numm) {
+      const record = attendanceRecords.find(r => r.date === date && r.numm === numm);
+      if (record) {
+        document.getElementById('attendance-date').value = date;
+        // Populate form with record details
+        // Find and select the appropriate radio buttons for status
+        // ... additional code to populate the form ...
+      }
+    }
+
+    function deleteRecord(date, numm) {
+      fetch(`https://script.google.com/macros/s/AKfycbxOkGeemo3XeeZxXJhp02p8exaxQWy8Fgsc8145zfipJsw5u-rkwvBbsK5HQ1Xh08gs/exec?action=delete&date=${date}&numm=${numm}`, {
+        method: 'POST'
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'success') {
+            Swal.fire('Success', 'Record deleted successfully', 'success');
+            fetchStudentList(); // Refresh the list
+          } else {
+            Swal.fire('Error', 'Failed to delete record', 'error');
+          }
+        })
+        .catch(error => {
+          console.error('Error deleting record: ', error);
+          Swal.fire('Error', 'Failed to delete record: ' + error, 'error');
+        });
+    }
+  </script>
+</body>
+</html>

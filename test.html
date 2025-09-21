@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LIFF Share Target Picker</title>
+    <script src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <style>
+        #report {
+            width: 100%;
+            height: 500px;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Share222 Looker Studio Report on LINE</h1>
+    <iframe id="report" src="https://lookerstudio.google.com/embed/reporting/96880f31-78a2-40b1-8a45-56991dedb48b/page/TlJ0C"></iframe>
+    <button id="shareButton">Share Report on LINE</button>
+
+    <script>
+        function initializeLiff(myLiffId) {
+            liff.init({
+                liffId: myLiffId
+            }).then(() => {
+                document.getElementById('shareButton').addEventListener('click', () => {
+                    html2canvas(document.querySelector("#report")).then(canvas => {
+                        const dataUrl = canvas.toDataURL('image/png');
+                        liff.shareTargetPicker([{
+                            type: "image",
+                            originalContentUrl: dataUrl,
+                            previewImageUrl: dataUrl
+                        }]).catch((err) => {
+                            console.error(err);
+                        });
+                    });
+                });
+            }).catch((err) => {
+                console.error('LIFF initialization failed', err);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const myLiffId = "2005230346-gvK8jjJ9";
+            initializeLiff(myLiffId);
+        });
+    </script>
+</body>
+</html>

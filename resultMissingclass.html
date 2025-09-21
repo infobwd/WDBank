@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>รายชื่อนักเรียนขาดเรียน</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+    <!-- Sweet Alert -->
+    <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Loading Overlay -->
+    <script src="https://cdn.jsdelivr.net/npm/gasparesganga-jquery-loading-overlay@2.1.7/dist/loadingoverlay.min.js"></script>
+    <script src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script>
+
+    <style>
+          @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai');
+
+  * {
+    box-sizing: border-box;
+    font-family: 'Noto Sans Thai', sans-serif;
+  }
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            background: rgb(252, 233, 233);
+            background: linear-gradient(0deg, rgba(252, 233, 233, 1) 0%, rgba(224, 244, 241, 1) 26%, rgba(255, 255, 255, 1) 71%);
+            -webkit-background-size: cover;
+            -moz-background-size: cover;
+            -o-background-size: cover;
+            flex-direction: column;
+        }
+        .form-label2 {
+            font-size: 14px;
+        }
+        .col-1 {
+            font-size: 13px;
+        }
+        .list {
+            background-color: #ffffff;
+            padding: 1.8em 1.2em;
+            box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+            border-radius: 0.6em;
+        }
+        footer {
+            margin-top: 10px;
+            background-color: #000;
+            width: 100%;
+            padding: 2px;
+            position: fixed;
+            bottom: 0;
+        }
+        footer p,
+        footer a {
+            text-decoration: none;
+            margin: 0;
+        }
+        footer .fa {
+            color: #fff740;
+        }
+    </style>
+</head>
+<body>
+<center class="mb-4">
+    <img src="https://img.icons8.com/?size64&id=JRND0trVuPaa&format=gif" class="mt-4" style="width:200px; height:auto; padding-bottom: 10px;">
+    <h2>รายชื่อนักเรียนขาดเรียน</h2>
+    <h5 class="text-center text-danger">โรงเรียนบ้านวังด้ง</h5>
+</center>
+
+<main class="container">
+    <div class="container list">
+        <div id="table-container" class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr id="table-head">
+                        <!-- Headers will be inserted here -->
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    <!-- Data rows will be inserted here -->
+                </tbody>
+            </table>
+        </div>
+        <div class="text-center mt-4">
+            <button id="share-line" class="btn btn-success">
+                <i class="fab fa-line"></i> Share Line
+            </button>
+        </div>
+    </div>
+</main>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const sheetUrl = 'https://opensheet.elk.sh/1EZtfvb0h9wYZbRFTGcm0KVPScnyu6B-boFG6aMpWEUo/นักเรียนขาดเรียนวันนี้';
+        
+        fetch(sheetUrl)
+            .then(response => response.json())
+            .then(data => {
+                const tableHead = document.getElementById('table-head');
+                const tableBody = document.getElementById('table-body');
+                
+                if (data.length > 0) {
+                    // Create table headers
+                    const headers = Object.keys(data[0]);
+                    headers.forEach(header => {
+                        const th = document.createElement('th');
+                        th.textContent = header;
+                        tableHead.appendChild(th);
+                    });
+
+                    // Create table rows
+                    data.forEach(row => {
+                        const tr = document.createElement('tr');
+                        headers.forEach(header => {
+                            const td = document.createElement('td');
+                            td.textContent = row[header];
+                            tr.appendChild(td);
+                        });
+                        tableBody.appendChild(tr);
+                    });
+                } else {
+                    const noDataTr = document.createElement('tr');
+                    const noDataTd = document.createElement('td');
+                    noDataTd.setAttribute('colspan', headers.length);
+                    noDataTd.textContent = 'No data available';
+                    noDataTr.appendChild(noDataTd);
+                    tableBody.appendChild(noDataTr);
+                }
+            })
+            .catch(error => console.error('Error fetching data:', error));
+    });
+
+    document.getElementById('share-line').addEventListener('click', function() {
+    const sheetUrl = 'https://opensheet.elk.sh/1EZtfvb0h9wYZbRFTGcm0KVPScnyu6B-boFG6aMpWEUo/นักเรียนขาดเรียนวันนี้';
+
+
+      
+    fetch(sheetUrl)
+        .then(response => response.json())
+        .then(data => {
+            if (data.length > 0) {
+                const headers = Object.keys(data[0]);
+                const headerBox = {
+                    type: 'box',
+                    layout: 'horizontal',
+                    contents: headers.map(header => ({
+                        type: 'text',
+                        text: header,
+                        size: 'sm',
+                        weight: 'bold',
+                        color: '#000000',
+                        flex: 1,
+                        align: 'center'
+                    }))
+                };
+
+                const dataRows = data.map((row, index) => ({
+                    type: 'box',
+                    layout: 'horizontal',
+                    backgroundColor: index % 2 === 0 ? '#F0F0F0' : '#FFFFFF', // Alternating background colors
+                    contents: headers.map(header => ({
+                        type: 'text',
+                        text: row[header],
+                        size: 'sm',
+                        color: '#555555',
+                        flex: 1,
+                        align: 'center'
+                    }))
+                }));
+
+                const flexMessage = {
+                    type: 'flex',
+                    altText: 'รายชื่อนักเรียนขาดเรียน',
+                    contents: {
+                        type: 'bubble',
+                        size: 'giga',
+                        hero: {
+                            type: 'image',
+                            url: 'https://raw.githubusercontent.com/infobwd/wdconnect/main/std.png',
+                            size: 'full',
+                            aspectRatio: '20:13',
+                            aspectMode: 'cover',
+                            action: {
+                                type: 'uri',
+                                uri: 'https://liff.line.me/2005494853-yDNbM117'
+                            }
+                        },
+                        body: {
+                            type: 'box',
+                            layout: 'vertical',
+                            contents: [
+                                {
+                                    type: 'text',
+                                    text: 'รายชื่อนักเรียนขาดเรียน',
+                                    weight: 'bold',
+                                    size: 'xl'
+                                },
+                                {
+                                    type: 'text',
+                                    text: `โรงเรียนบ้านวังด้ง ข้อมูล ณ วันที่ ${new Date().toLocaleDateString()}`,
+                                    color: '#7286D3',
+                                    size: 'md'
+                                },
+                                {
+                                    type: 'separator',
+                                    margin: 'lg'
+                                },
+                                headerBox,
+                                {
+                                    type: 'separator',
+                                    margin: 'sm'
+                                },
+                                {
+                                    type: 'box',
+                                    layout: 'vertical',
+                                    margin: 'lg',
+                                    spacing: 'sm',
+                                    contents: dataRows
+                                }
+                            ]
+                        },
+                        footer: {
+                            type: 'box',
+                            layout: 'vertical',
+                            spacing: 'sm',
+                            contents: [
+                                {
+                                    type: 'button',
+                                    style: 'primary',
+                                    action: {
+                                        type: 'uri',
+                                        label: 'คลิกเพื่ออัปเดตข้อมูล',
+                                        uri: 'https://liff.line.me/2005494853-yDNbM117'
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    quickReply: {
+                        items: [
+                            {
+                                type: 'action',
+                                action: {
+                                    type: 'message',
+                                    label: 'ดูรายละเอียดเพิ่มเติม',
+                                    text: 'ดูรายละเอียดเพิ่มเติม'
+                                }
+                            },
+                            {
+                                type: 'action',
+                                action: {
+                                    type: 'uri',
+                                    label: 'เยี่ยมชมเว็บไซต์',
+                                    uri: 'https://example.com'
+                                }
+                            }
+                        ]
+                    }
+                };
+
+                liff.init({ liffId: "2005494853-yDNbM117" })
+                    .then(() => {
+                        if (!liff.isLoggedIn()) {
+                            liff.login();
+                        }
+                        liff.shareTargetPicker([flexMessage])
+                            .then((result) => {
+                                if (result) {
+                                    Swal.fire('Success', 'Attendance summary shared successfully!', 'success');
+                                } else {
+                                    Swal.fire('Info', 'ShareTargetPicker was closed without sending the message', 'info');
+                                }
+                          liff.closeWindow();
+                            })
+                            .catch((error) => {
+                                Swal.fire('Error', 'Error sharing attendance summary: ' + error, 'error');
+                            });
+                    })
+                    .catch((err) => {
+                        console.error('LIFF Initialization failed ', err);
+                    });
+            } else {
+                Swal.fire('No data available to share');
+            }
+        })
+        .catch(error => console.error('Error fetching data:', error));
+});
+
+
+
+</script>
+
+<div class="text-center p-4 col-12 mt-4" style="background-color: rgba(49, 0, 0, 0.05);">
+    © 2024 Copyright | WD Team
+</div>
+
+</body>
+</html>

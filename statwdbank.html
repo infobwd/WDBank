@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>สถิติการออม</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+    <!-- Sweet Alert -->
+    <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Loading Overlay -->
+    <script src="https://cdn.jsdelivr.net/npm/gasparesganga-jquery-loading-overlay@2.1.7/dist/loadingoverlay.min.js"></script>
+    <script src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai');
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Noto Sans Thai', sans-serif;
+        }
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            background: rgb(252, 233, 233);
+            background: linear-gradient(0deg, rgba(252, 233, 233, 1) 0%, rgba(224, 244, 241, 1) 26%, rgba(255, 255, 255, 1) 71%);
+            -webkit-background-size: cover;
+            -moz-background-size: cover;
+            -o-background-size: cover;
+            flex-direction: column;
+        }
+        .form-label2 {
+            font-size: 14px;
+        }
+        .col-1 {
+            font-size: 13px;
+        }
+        .list {
+            background-color: #ffffff;
+            padding: 1.8em 1.2em;
+            box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+            border-radius: 0.6em;
+        }
+        footer {
+            margin-top: 10px;
+            background-color: #000;
+            width: 100%;
+            padding: 2px;
+            position: fixed;
+            bottom: 0;
+        }
+        footer p,
+        footer a {
+            text-decoration: none;
+            margin: 0;
+        }
+        footer .fa {
+            color: #fff740;
+        }
+    </style>
+</head>
+<body>
+<center class="mb-4">
+    <img src="https://img.icons8.com/?size64&id=JRND0trVuPaa&format=gif" class="mt-4" style="width:200px; height:auto; padding-bottom: 10px;">
+    <h2>สถิติการออม</h2>
+    <h5 class="text-center text-danger">โรงเรียนบ้านวังด้ง</h5>
+</center>
+
+<main class="container">
+    <div class="container list">
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label for="startDate" class="form-label">Start Date:</label>
+                <input type="date" id="startDate" class="form-control">
+            </div>
+            <div class="col-md-6">
+                <label for="endDate" class="form-label">End Date:</label>
+                <input type="date" id="endDate" class="form-control">
+            </div>
+        </div>
+        <button id="filter-button" class="btn btn-primary mb-3">Filter</button>
+        <div id="depositWithdrawalCounts" class="row mb-3"></div>
+        <div id="table-container" class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr id="table-head">
+                        <!-- Headers will be inserted here -->
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    <!-- Data rows will be inserted here -->
+                </tbody>
+            </table>
+            <div id="pagination" class="text-center"></div>
+        </div>
+        <div class="text-center mt-4">
+            <button id="share-line" class="btn btn-success">
+                <i class="fab fa-line"></i> Share Line
+            </button>
+        </div>
+    </div>
+</main>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const sheetUrl = 'https://opensheet.elk.sh/1EZtfvb0h9wYZbRFTGcm0KVPScnyu6B-boFG6aMpWEUo/Sortรายการฝากและถอน';
+        const rowsPerPage = 10;
+        let currentPage = 1;
+        let tableData = [];
+
+        fetch(sheetUrl)
+            .then(response => response.json())
+            .then(data => {
+                tableData = data;
+                renderTable(tableData, currentPage, rowsPerPage);
+                renderDepositWithdrawalCounts(tableData);
+                setupPagination(tableData, rowsPerPage);
+            })
+            .catch(error => console.error('Error fetching data:', error));
+
+        function renderTable(data, page, rowsPerPage) {
+            const tableHead = document.getElementById('table-head');
+            const tableBody = document.getElementById('table-body');
+            tableHead.innerHTML = '';
+            tableBody.innerHTML = '';
+
+            const headers = Object.keys(data[0]);
+            headers.forEach(header => {
+                const th = document.createElement('th');
+                th.textContent = header;
+                tableHead.appendChild(th);
+            });
+
+            const startIndex = (page - 1) * rowsPerPage;
+            const endIndex = startIndex + rowsPerPage;
+            const pageData = data.slice(startIndex, endIndex);
+
+            pageData.forEach(row => {
+                const tr = document.createElement('tr');
+                headers.forEach(header => {
+                    const td = document.createElement('td');
+                    td.textContent = row[header];
+                    tr.appendChild(td);
+                });
+                tableBody.appendChild(tr);
+            });
+        }
+
+        function setupPagination(data, rowsPerPage) {
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+            const pageCount = Math.ceil(data.length / rowsPerPage);
+
+            for (let i = 1; i <= pageCount; i++) {
+                const button = document.createElement('button');
+                button.textContent = i;
+                button.classList.add('btn', 'btn-sm', 'btn-primary', 'm-1');
+                if (i === currentPage) button.classList.add('btn-success');
+                button.addEventListener('click', () => {
+                    currentPage
+= i;
+                    renderTable(data, currentPage, rowsPerPage);
+                    setupPagination(data, rowsPerPage);
+                });
+                pagination.appendChild(button);
+            }
+        }
+
+        function renderDepositWithdrawalCounts(data) {
+            const depositWithdrawalCountsContainer = document.getElementById('depositWithdrawalCounts');
+            const depositCount = data.filter(row => row['Transaction Type'] === 'Deposit').length;
+            const withdrawalCount = data.filter(row => row['Transaction Type'] === 'Withdrawal').length;
+
+            const depositCountElement = createCountElement('Deposits', depositCount);
+            const withdrawalCountElement = createCountElement('Withdrawals', withdrawalCount);
+
+            depositWithdrawalCountsContainer.innerHTML = '';
+            depositWithdrawalCountsContainer.appendChild(depositCountElement);
+            depositWithdrawalCountsContainer.appendChild(withdrawalCountElement);
+        }
+
+        function createCountElement(label, count) {
+            const colDiv = document.createElement('div');
+            colDiv.classList.add('col-md-6', 'mb-3');
+
+            const cardDiv = document.createElement('div');
+            cardDiv.classList.add('card');
+
+            const cardBodyDiv = document.createElement('div');
+            cardBodyDiv.classList.add('card-body');
+
+            const countElement = document.createElement('h5');
+            countElement.classList.add('card-title');
+            countElement.textContent = `${label}: ${count}`;
+
+            cardBodyDiv.appendChild(countElement);
+            cardDiv.appendChild(cardBodyDiv);
+            colDiv.appendChild(cardDiv);
+
+            return colDiv;
+        }
+
+        document.getElementById('filter-button').addEventListener('click', function() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            if (startDate && endDate) {
+                const filteredData = tableData.filter(row => {
+                    const rowDate = new Date(row['Date']);
+                    return rowDate >= new Date(startDate) && rowDate <= new Date(endDate);
+                });
+
+                renderTable(filteredData, currentPage, rowsPerPage);
+                renderDepositWithdrawalCounts(filteredData);
+                setupPagination(filteredData, rowsPerPage);
+            } else {
+                alert('Please select both start and end dates.');
+            }
+        });
+
+        document.getElementById('share-line').addEventListener('click', function() {
+            const flexMessage = {
+                type: 'flex',
+                altText: 'สถิติการออม',
+                contents: {
+                    type: 'bubble',
+                    body: {
+                        type: 'box',
+                        layout: 'vertical',
+                        contents: [
+                            {
+                                type: 'text',
+                                text: 'สถิติการออม',
+                                weight: 'bold',
+                                size: 'xl'
+                            },
+                            {
+                                type: 'text',
+                                text: `โรงเรียนบ้านวังด้ง ข้อมูล ณ วันที่ ${new Date().toLocaleDateString()}`,
+                                color: '#7286D3',
+                                size: 'md'
+                            }
+                        ]
+                    }
+                }
+            };
+
+            liff.init({ liffId: "2005230346-kZ9xaarO" })
+                .then(() => {
+                    if (!liff.isLoggedIn()) {
+                        liff.login();
+                    }
+                    liff.shareTargetPicker([flexMessage])
+                        .then((result) => {
+                            if (result) {
+                                Swal.fire('Success', 'Attendance summary shared successfully!', 'success');
+                            } else {
+                                Swal.fire('Info', 'ShareTargetPicker was closed without sending the message', 'info');
+                            }
+                            liff.closeWindow();
+                        })
+                        .catch((error) => {
+                            Swal.fire('Error', 'Error sharing attendance summary: ' + error, 'error');
+                        });
+                })
+                .catch((err) => {
+                    console.error('LIFF Initialization failed ', err);
+                });
+        });
+    });
+</script>
+
+<div class="text-center p-4 col-12 mt-4" style="background-color: rgba(49, 0, 0, 0.05);">
+    © 2024 Copyright | WD Team
+</div>
+
+</body>
+</html>
