@@ -87,7 +87,7 @@ function populateHeaderSelectors(){
     amountSel.appendChild(opt1); countSel.appendChild(opt2);
   });
 
-  let guessAmount = tableHeaders.find(h => /(คงเหลือ|ยอดคงเหลือ)/i.test(String(h))) or \
+  let guessAmount = tableHeaders.find(h => /(คงเหลือ|ยอดคงเหลือ)/i.test(String(h))) || 
                     tableHeaders.find(h => /(ยอด|รวม|amount|total|เงิน)/i.test(String(h)));
   let guessCount  = tableHeaders.find(isCountHeader);
 
