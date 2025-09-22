@@ -19,6 +19,11 @@ const fmtNumber = (val) => {
 };
 const cut = (s, len) => String(s ?? '').length > len ? String(s).slice(0, len - 1) + '…' : String(s ?? '');
 
+function thaiDateString(d=new Date()){
+  const opts = { year:'numeric', month:'long', day:'numeric' };
+  return d.toLocaleDateString('th-TH', opts);
+}
+
 function toast(msg){
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -73,7 +78,7 @@ function renderTable(data){
 
 // Load data
 async function loadData(){
-  document.getElementById('today').textContent = new Date().toLocaleDateString('th-TH');
+  document.getElementById('todayThai').textContent = thaiDateString();
   try{
     const res = await fetch(SHEET_URL, { cache: 'no-store' });
     const data = await res.json();
@@ -149,28 +154,28 @@ function buildFlexFromData(data){
   }));
   return {
     type:'flex',
-    altText:'TOP 10 ฝากเงินเก่งมาก — บ้านวังด้ง',
+    altText:'WDBank — TOP 10 ฝากเงินเก่ง',
     contents:{
       type:'bubble', size:'giga',
       hero:{ type:'image', url:'https://raw.githubusercontent.com/infobwd/wdconnect/main/top10.png',
         size:'full', aspectRatio:'20:13', aspectMode:'cover',
         action:{ type:'uri', uri:`https://liff.line.me/${LIFF_ID}` } },
       body:{ type:'box', layout:'vertical', contents:[
-        { type:'text', text:'TOP 10 ฝากเงินเก่งมาก', weight:'bold', size:'lg' },
-        { type:'text', text:`โรงเรียนบ้านวังด้ง • ${new Date().toLocaleDateString('th-TH')}`, color:'#7286D3', size:'sm' },
+        { type:'text', text:'WDBank • TOP 10 ฝากเงินเก่ง', weight:'bold', size:'lg' },
+        { type:'text', text:`ออมก่อนใช้ • ${thaiDateString()}`, color:'#7286D3', size:'sm' },
         { type:'separator', margin:'md' },
         headerBox,
         { type:'separator', margin:'sm' },
         { type:'box', layout:'vertical', margin:'md', spacing:'sm', contents:dataRows }
       ]},
       footer:{ type:'box', layout:'vertical', spacing:'sm', contents:[
-        { type:'button', style:'primary', action:{ type:'uri', label:'คลิกเพื่ออัปเดตข้อมูล', uri:`https://liff.line.me/${LIFF_ID}` } }
+        { type:'button', style:'primary', action:{ type:'uri', label:'เปิดใน WDBank', uri:`https://liff.line.me/${LIFF_ID}` } }
       ]}
     }
   };
 }
 
-// Share with login choice when outside LINE
+// Share (require login)
 async function shareToLine(){
   // ensure data
   if (!Array.isArray(lastData) || lastData.length===0){
@@ -183,29 +188,14 @@ async function shareToLine(){
 
   await ensureLiffReady();
   const loggedIn = liff.isLoggedIn?.() === true;
-  const inClient = liff.isInClient?.() === true;
-
-  // แจ้งเตือนหากยังไม่ login (แสดง badge + toast)
   if (!loggedIn){
-    showLoginBadge(true);
-    toast('ยังไม่เข้าสู่ระบบ LINE');
-  }
-
-  // ถ้าอยู่นอก LINE และยังไม่ login → ถามตัวเลือกก่อนแชร์
-  if (!inClient && !loggedIn){
-    const res = await Swal.fire({
-      title: 'ยังไม่ได้เข้าสู่ระบบ LINE',
-      text: 'ต้องการเข้าสู่ระบบก่อน แล้วค่อยแชร์ไหม? (แนะนำเพื่อประสบการณ์เหมือนแอปธนาคาร)',
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonText: 'เข้าสู่ระบบก่อน',
-      cancelButtonText: 'แชร์เลย (ไม่ล็อกอิน)'
+    await Swal.fire({
+      title: 'ต้องเข้าสู่ระบบ LINE',
+      text: 'เพื่อแชร์ผ่าน LINE จำเป็นต้องเข้าสู่ระบบก่อน',
+      icon: 'info',
+      confirmButtonText: 'เข้าสู่ระบบ'
     });
-    if (res.isConfirmed){
-      // login แล้วกลับมาหน้าเดิม
-      return liff.login({ redirectUri: location.href });
-    }
-    // ผู้ใช้เลือกแชร์ต่อได้ตามเดิม
+    return liff.login({ redirectUri: location.href });
   }
 
   const flex = buildFlexFromData(lastData);
@@ -226,7 +216,7 @@ function closeSheet(){ document.getElementById('profileSheet').classList.add('hi
 
 // Events
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('today').textContent = new Date().toLocaleDateString('th-TH');
+  document.getElementById('todayThai').textContent = thaiDateString();
   loadData();
   loadProfile();
 
