@@ -1,20 +1,23 @@
-
 // Config (ใช้ LIFF ตัวเดียวสำหรับทั้งหน้า)
 const LIFF_ID = '2005230346-2OVa774O';
 
-// Sheet endpoints
+// Sheet endpoints (Top10)
 const SHEET_AMOUNT      = 'https://opensheet.elk.sh/1EZtfvb0h9wYZbRFTGcm0KVPScnyu6B-boFG6aMpWEUo/Sortบัญชีเงินมากและฝากมากกว่าหรือเท่ากับค่าเฉลี่ย';
 const SHEET_FREQUENT    = 'https://opensheet.elk.sh/1EZtfvb0h9wYZbRFTGcm0KVPScnyu6B-boFG6aMpWEUo/Sortบัญชีฝากถี่มาก';
 const SHEET_DEPOSITONLY = 'https://opensheet.elk.sh/1EZtfvb0h9wYZbRFTGcm0KVPScnyu6B-boFG6aMpWEUo/Sortบัญชีไม่ถอนและฝากมากกว่าหรือเท่ากับค่าเฉลี่ย';
 
-// Transaction (สารสนเทศผู้บริหาร)
+// Transaction (สารสนเทศผู้บริหาร / รายการล่าสุด / KPI สัปดาห์นี้)
 const SHEET_TX = 'https://opensheet.elk.sh/1EZtfvb0h9wYZbRFTGcm0KVPScnyu6B-boFG6aMpWEUo/Sortรายการฝากและถอน';
+
+// Accounts (ข้อมูลห้อง/ชั้นรวม)
+const SHEET_ACCOUNTS = 'https://opensheet.elk.sh/1EZtfvb0h9wYZbRFTGcm0KVPScnyu6B-boFG6aMpWEUo//บัญชี'; // ใช้ตามที่ผู้ใช้ให้มา (มี //)
 
 let H_AMOUNT=[], H_FREQ=[], H_DEP=[];
 let D_AMOUNT=[], D_FREQ=[], D_DEP=[];         // full datasets
 let TOP_AMOUNT=[], TOP_FREQ=[], TOP_DEP=[];   // top10 per sheet
 
 let TX = []; // transaction rows
+let AC = []; // accounts rows
 
 // Utils
 const isNumeric = (val) => {
@@ -30,13 +33,13 @@ const fmtNumber = (val) => {
 const cut = (s, len) => String(s ?? '').length > len ? String(s).slice(0, len - 1) + '…' : String(s ?? '');
 const thaiDateString = (d=new Date()) => d.toLocaleDateString('th-TH', { year:'numeric', month:'long', day:'numeric' });
 
-function isAccountHeader(h){ return /(เลข\s*บัญชี|บัญชี|account)/i.test(String(h)); }
+function isAccountHeader(h){ return /(เลข\\s*บัญชี|บัญชี|account)/i.test(String(h)); }
 function isCountHeader(h){ return /(จำนวน|ครั้ง|count)/i.test(String(h)); }
 function isBalanceHeader(h){ return /(คงเหลือ|ยอดคงเหลือ|ยอด|รวม|amount|total|เงิน)/i.test(String(h)); }
 
-// แสดงเลขบัญชีแบบ mask เหมือนแอปธนาคาร: โชว์ 4 ตัวแรก + 2 ตัวท้าย
+// แสดงเลขบัญชีแบบ mask (4 ตัวแรก + 2 ตัวท้าย)
 function formatAccountMasked(val){
-  const raw = String(val ?? '').replace(/\s+/g, '').replace(/,/g,'');
+  const raw = String(val ?? '').replace(/\\s+/g, '').replace(/,/g,'');
   const first = raw.slice(0,4);
   const last2 = raw.slice(-2);
   return `${first} •••• ••${last2}`.trim();
@@ -71,8 +74,9 @@ async function fetchJSON(url){ const res=await fetch(url,{cache:'no-store'}); re
 
 async function loadAll(){
   document.getElementById('todayThai').textContent = thaiDateString();
-  [D_AMOUNT, D_FREQ, D_DEP, TX] = await Promise.all([
-    fetchJSON(SHEET_AMOUNT), fetchJSON(SHEET_FREQUENT), fetchJSON(SHEET_DEPOSITONLY), fetchJSON(SHEET_TX)
+  [D_AMOUNT, D_FREQ, D_DEP, TX, AC] = await Promise.all([
+    fetchJSON(SHEET_AMOUNT), fetchJSON(SHEET_FREQUENT), fetchJSON(SHEET_DEPOSITONLY),
+    fetchJSON(SHEET_TX), fetchJSON(SHEET_ACCOUNTS)
   ]);
   H_AMOUNT=headersOf(D_AMOUNT); H_FREQ=headersOf(D_FREQ); H_DEP=headersOf(D_DEP);
   TOP_AMOUNT=D_AMOUNT.slice(0,10); TOP_FREQ=D_FREQ.slice(0,10); TOP_DEP=D_DEP.slice(0,10);
@@ -82,6 +86,8 @@ async function loadAll(){
   renderTable(document.getElementById('th-depositonly'), document.getElementById('tb-depositonly'), TOP_DEP);
 
   renderAllStars();
+  renderWeeklyKPIs();
+  renderLatest10();
 }
 
 // All-stars: intersection by account column
@@ -133,6 +139,84 @@ function renderAllStars(){
       <div class="subtitle">ยอดคงเหลือโดยประมาณ: <strong>${amountTxt}</strong> บาท • จำนวนครั้งฝาก: <strong>${countTxt}</strong></div>
     `;
     wrap.appendChild(card);
+  });
+}
+
+// ---- Weekly KPIs & latest 10 ----
+function parseThaiDate(s){
+  // ex: "22/9/2568, 9:23:26"
+  try{
+    const [datePart, timePart='00:00:00'] = String(s).split(',').map(t=>t.trim());
+    const [d,m,y] = datePart.split('/').map(x=>parseInt(x,10));
+    const [hh,mm,ss] = timePart.split(':').map(x=>parseInt(x,10));
+    const gy = (y>2400) ? y-543 : y; // convert B.E. to A.D.
+    return new Date(gy, m-1, d, hh||0, mm||0, ss||0);
+  }catch(e){ return null; }
+}
+
+function isThisWeek(date){
+  if (!date) return false;
+  const now = new Date();
+  const start = new Date(now);
+  // เริ่มสัปดาห์วันจันทร์
+  const day = (now.getDay()+6)%7; // Monday=0
+  start.setDate(now.getDate() - day);
+  start.setHours(0,0,0,0);
+  const end = new Date(start); end.setDate(start.getDate()+7);
+  return date >= start && date < end;
+}
+
+function renderWeeklyKPIs(){
+  let depCount=0, wdrCount=0, depAmt=0, wdrAmt=0;
+  const classCount = new Map();
+
+  TX.forEach(r=>{
+    const d = parseThaiDate(r['วันที่']);
+    if (!isThisWeek(d)) return;
+    const act = String(r['รายการ']||'').trim();
+    const amt = toNumber(r['จำนวนเงิน']);
+    const cls = String(r['ชั้น']||r['ห้อง']||'ไม่ระบุ');
+
+    if (act==='ฝาก'){ depCount++; depAmt += Number.isFinite(amt)? amt:0; }
+    else if (act==='ถอน'){ wdrCount++; wdrAmt += Number.isFinite(amt)? amt:0; }
+
+    classCount.set(cls, (classCount.get(cls)||0)+1);
+  });
+
+  // Top class by activity count
+  let topClass='-', topClassCount=0;
+  for (const [k,v] of classCount.entries()){ if (v>topClassCount){ topClass=k; topClassCount=v; } }
+
+  document.getElementById('kpiDepCount').textContent = depCount.toLocaleString('th-TH') + ' ครั้ง';
+  document.getElementById('kpiDepAmt').textContent   = 'รวม ' + fmtNumber(depAmt) + ' บาท';
+  document.getElementById('kpiWdrCount').textContent = wdrCount.toLocaleString('th-TH') + ' ครั้ง';
+  document.getElementById('kpiWdrAmt').textContent   = 'รวม ' + fmtNumber(wdrAmt) + ' บาท';
+  const net = depAmt - wdrAmt;
+  document.getElementById('kpiNet').textContent = fmtNumber(net) + ' บาท';
+  document.getElementById('kpiTopClass').textContent = topClass;
+  document.getElementById('kpiTopClassDetail').textContent = topClass==='-'? '-' : (topClassCount.toLocaleString('th-TH') + ' ครั้งสัปดาห์นี้');
+}
+
+function renderLatest10(){
+  // Sort TX by date desc
+  const rows = TX.map(r=>({ ...r, __d: parseThaiDate(r['วันที่']) })).filter(r=>r.__d).sort((a,b)=>b.__d - a.__d).slice(0,10);
+  const headers = ['วันที่','บัญชี','รายการ','จำนวนเงิน','ชั้น'];
+  const thead = document.getElementById('th-latest');
+  const tbody = document.getElementById('tb-latest');
+  thead.innerHTML=''; tbody.innerHTML='';
+
+  headers.forEach(h=>{ const th=document.createElement('th'); th.textContent=h; thead.appendChild(th); });
+  rows.forEach(r=>{
+    const tr=document.createElement('tr');
+    const cells = [
+      r['วันที่']||'',
+      formatAccountMasked(r['บัญชี']||''),
+      r['รายการ']||'',
+      fmtNumber(r['จำนวนเงิน']||''),
+      r['ชั้น']||''
+    ];
+    cells.forEach(v=>{ const td=document.createElement('td'); td.textContent=String(v); tr.appendChild(td); });
+    tbody.appendChild(tr);
   });
 }
 
@@ -233,18 +317,7 @@ async function shareAllStars(){
   liff.closeWindow && liff.closeWindow();
 }
 
-// ---- Management insights (TX) ----
-function parseThaiDate(s){
-  // ex: "22/9/2568, 9:23:26"
-  try{
-    const [datePart, timePart='00:00:00'] = String(s).split(',').map(t=>t.trim());
-    const [d,m,y] = datePart.split('/').map(x=>parseInt(x,10));
-    const [hh,mm,ss] = timePart.split(':').map(x=>parseInt(x,10));
-    const gy = (y>2400) ? y-543 : y; // convert B.E. to A.D.
-    return new Date(gy, m-1, d, hh||0, mm||0, ss||0);
-  }catch(e){ return null; }
-}
-
+// ---- PDF (เหมือน v2) ----
 function buildTxInsights(){
   if (!Array.isArray(TX) || TX.length===0) return { text: 'ไม่มีข้อมูลธุรกรรม', node: null };
 
@@ -277,7 +350,6 @@ function buildTxInsights(){
   return { text, node: div };
 }
 
-// ---- PDF ----
 function buildPDFSection(title, headers, rows){
   const wrap = document.createElement('div');
 
@@ -309,10 +381,8 @@ function buildPDFSection(title, headers, rows){
   table.appendChild(tbody);
   wrap.appendChild(table);
 
-  // insights
   const ins = buildTxInsights();
   if (ins.node) wrap.appendChild(ins.node);
-
   return wrap;
 }
 

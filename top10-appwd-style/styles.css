@@ -45,9 +45,17 @@ button, input, select, textarea{font-family:inherit}
 
 /* Section head */
 .section-head{display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:.6rem; font-family:inherit}
+.section-head.stack-sm{align-items:flex-start}
 .title{font-size:1.05rem; font-weight:800; color:var(--ink)}
 .subtitle{font-size:.9rem; color:var(--muted)}
 .desc{font-size:.9rem; color:#475569; margin-top:.2rem}
+
+/* KPI grid */
+.kpi-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:.8rem}
+.kpi{border:1px solid #e5e7eb; border-radius:12px; padding:.6rem .8rem; background:#fff}
+.kpi-h{font-size:.85rem; color:#64748b}
+.kpi-v{font-size:1.2rem; font-weight:800; color:#0f172a}
+.kpi-sub{font-size:.8rem; color:#64748b}
 
 /* Allstars */
 .allstars{display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:.8rem; font-family:inherit}
@@ -61,7 +69,7 @@ button, input, select, textarea{font-family:inherit}
 .badge.purple{background:#f5f3ff; color:#7c3aed}
 
 /* Tabs */
-.tabs{display:flex; gap:.5rem; margin-top:.4rem; font-family:inherit}
+.tabs{display:flex; gap:.5rem; margin-top:.4rem; flex-wrap:wrap}
 .tab{padding:.5rem .8rem; border:none; border-radius:10px; background:#eaf2ff; font-weight:700; cursor:pointer; font-family:inherit}
 .tab.active{background:#2563EB; color:#fff}
 .panel{display:none}
@@ -74,7 +82,7 @@ button, input, select, textarea{font-family:inherit}
 .table tbody td{padding:.55rem .5rem; border-bottom:1px solid #f1f5f9; white-space:nowrap; text-align:center}
 .table tbody tr:nth-child(odd){background:#f9fbff}
 
-/* Account badge style (masked) */
+/* Account pill (masked) */
 .acc-pill{
   display:inline-block; padding:.25rem .6rem; border-radius:999px;
   background:#0ea5e926; color:#0f172a; font-weight:800;
@@ -83,8 +91,10 @@ button, input, select, textarea{font-family:inherit}
 
 /* Buttons */
 .btn{display:inline-flex; align-items:center; gap:.45rem; border:none; border-radius:10px; padding:.65rem .9rem; font-weight:700; cursor:pointer; font-family:inherit}
+.btn.sm{padding:.45rem .65rem; font-size:.9rem}
 .btn-line{background:var(--line); color:#fff; box-shadow:0 10px 20px rgba(6,199,85,.25)}
 .btn-primary{background:var(--brand); color:#fff}
+.actions.wrap{display:flex; gap:.5rem; flex-wrap:wrap;}
 
 /* PDF report */
 .pdf-report{position:absolute; left:-99999px; top:-99999px; width:794px; padding:24px; font-family:Kanit, sans-serif; color:#111; background:#fff}
@@ -95,5 +105,15 @@ button, input, select, textarea{font-family:inherit}
 .pdf-report thead th{background:#eff6ff}
 .pdf-report .insight{margin-top:10px; padding:10px; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:8px; font-size:12px}
 
-/* Footer */
-.footer{padding:1rem; text-align:center; color:#64748b; font-size:.9rem;}
+/* Responsive */
+@media (max-width: 720px){
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .btn{padding:.5rem .7rem; font-size:.95rem}
+  .btn.sm{padding:.4rem .6rem; font-size:.85rem}
+  .section-head{flex-direction:column; align-items:flex-start}
+}
+@media (max-width: 420px){
+  .kpi-grid{grid-template-columns:1fr}
+  .btn{padding:.45rem .6rem; font-size:.85rem}
+  .btn.sm{padding:.35rem .5rem; font-size:.8rem}
+}
