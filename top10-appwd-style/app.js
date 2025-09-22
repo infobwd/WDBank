@@ -26,7 +26,17 @@ function toast(msg){
   setTimeout(()=>t.classList.add('hidden'), 2200);
 }
 
-// Render Table
+function showLoginBadge(show){
+  const badge = document.getElementById('loginBadge');
+  if (show) badge.classList.add('show'); else badge.classList.remove('show');
+}
+
+// Heuristic: header names considered as account number → do NOT add commas
+function isAccountHeader(h){
+  return /(เลข\s*บัญชี|บัญชี|account)/i.test(String(h));
+}
+
+// Render Table (center columns + no comma for account numbers)
 function renderTable(data){
   const thead = document.getElementById('table-head');
   const tbody = document.getElementById('table-body');
@@ -49,7 +59,12 @@ function renderTable(data){
     tableHeaders.forEach(h => {
       const td = document.createElement('td');
       const raw = row[h];
-      td.textContent = isNumeric(raw) ? fmtNumber(raw) : String(raw ?? '');
+      // ถ้าเป็นเลขบัญชี → แสดงตรง ๆ (ไม่เติม comma)
+      if (isAccountHeader(h)) {
+        td.textContent = String(raw ?? '');
+      } else {
+        td.textContent = isNumeric(raw) ? fmtNumber(raw) : String(raw ?? '');
+      }
       tr.appendChild(td);
     });
     tbody.appendChild(tr);
@@ -82,6 +97,41 @@ async function ensureLiffReady(){
   return liffInitOnce;
 }
 
+async function loadProfile(){
+  const avatar = document.getElementById('avatar');
+  const pfAvatar = document.getElementById('pfAvatar');
+  const pfName = document.getElementById('pfName');
+  const pfSub = document.getElementById('pfSub');
+
+  const ok = await ensureLiffReady();
+  if (!ok){
+    showLoginBadge(true);
+    return;
+  }
+
+  try{
+    if (!liff.isLoggedIn()) {
+      showLoginBadge(true);
+      pfName.textContent = 'Guest';
+      pfSub.textContent = 'ยังไม่ได้เข้าสู่ระบบ LINE';
+      return;
+    }
+    showLoginBadge(false);
+
+    const prof = await liff.getProfile();
+    if (prof?.pictureUrl){
+      avatar.src = prof.pictureUrl;
+      pfAvatar.src = prof.pictureUrl;
+    }
+    if (prof?.displayName){
+      pfName.textContent = prof.displayName;
+      pfSub.textContent = liff.isInClient()? 'เปิดผ่าน LINE': 'เปิดผ่านเว็บ';
+    }
+  }catch(e){
+    showLoginBadge(true);
+  }
+}
+
 function buildFlexFromData(data){
   const headers = Object.keys(data[0] || {});
   const top10 = data.slice(0,10);
@@ -91,7 +141,11 @@ function buildFlexFromData(data){
   };
   const dataRows = top10.map((row, idx) => ({
     type:'box', layout:'horizontal', backgroundColor: idx%2? '#FFFFFF':'#F5F6FA',
-    contents: headers.map(h => ({ type:'text', text: cut(isNumeric(row[h])? fmtNumber(row[h]): (row[h] ?? ''), 16), size:'xs', flex:1, align:'center' }))
+    contents: headers.map(h => ({
+      type:'text',
+      text: cut(isAccountHeader(h) ? String(row[h] ?? '') : (isNumeric(row[h])? fmtNumber(row[h]): (row[h] ?? '')), 16),
+      size:'xs', flex:1, align:'center'
+    }))
   }));
   return {
     type:'flex',
@@ -116,6 +170,7 @@ function buildFlexFromData(data){
   };
 }
 
+// Share with login choice when outside LINE
 async function shareToLine(){
   // ensure data
   if (!Array.isArray(lastData) || lastData.length===0){
@@ -126,8 +181,34 @@ async function shareToLine(){
   }
   if (!Array.isArray(lastData) || lastData.length===0){ toast('ไม่มีข้อมูลที่จะแชร์'); return; }
 
-  const flex = buildFlexFromData(lastData);
   await ensureLiffReady();
+  const loggedIn = liff.isLoggedIn?.() === true;
+  const inClient = liff.isInClient?.() === true;
+
+  // แจ้งเตือนหากยังไม่ login (แสดง badge + toast)
+  if (!loggedIn){
+    showLoginBadge(true);
+    toast('ยังไม่เข้าสู่ระบบ LINE');
+  }
+
+  // ถ้าอยู่นอก LINE และยังไม่ login → ถามตัวเลือกก่อนแชร์
+  if (!inClient && !loggedIn){
+    const res = await Swal.fire({
+      title: 'ยังไม่ได้เข้าสู่ระบบ LINE',
+      text: 'ต้องการเข้าสู่ระบบก่อน แล้วค่อยแชร์ไหม? (แนะนำเพื่อประสบการณ์เหมือนแอปธนาคาร)',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'เข้าสู่ระบบก่อน',
+      cancelButtonText: 'แชร์เลย (ไม่ล็อกอิน)'
+    });
+    if (res.isConfirmed){
+      // login แล้วกลับมาหน้าเดิม
+      return liff.login({ redirectUri: location.href });
+    }
+    // ผู้ใช้เลือกแชร์ต่อได้ตามเดิม
+  }
+
+  const flex = buildFlexFromData(lastData);
   try{
     const result = await liff.shareTargetPicker([flex]);
     if (result) toast('แชร์ไปยัง LINE แล้ว');
@@ -139,35 +220,13 @@ async function shareToLine(){
   }
 }
 
-// Profile UI
+// Bottom Sheet
 function openSheet(){ document.getElementById('profileSheet').classList.remove('hidden'); }
 function closeSheet(){ document.getElementById('profileSheet').classList.add('hidden'); }
 
-async function loadProfile(){
-  const avatar = document.getElementById('avatar');
-  const pfAvatar = document.getElementById('pfAvatar');
-  const pfName = document.getElementById('pfName');
-  const pfSub = document.getElementById('pfSub');
-
-  const ok = await ensureLiffReady();
-  if (!ok){ return; }
-  try{
-    const prof = await liff.getProfile();
-    if (prof?.pictureUrl){
-      avatar.src = prof.pictureUrl;
-      pfAvatar.src = prof.pictureUrl;
-    }
-    if (prof?.displayName){
-      pfName.textContent = prof.displayName;
-      pfSub.textContent = liff.isInClient()? 'เปิดผ่าน LINE': 'เปิดผ่านเว็บ';
-    }
-  }catch(e){
-    // keep default avatar
-  }
-}
-
 // Events
 document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('today').textContent = new Date().toLocaleDateString('th-TH');
   loadData();
   loadProfile();
 

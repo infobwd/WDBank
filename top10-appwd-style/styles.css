@@ -32,10 +32,45 @@ body{
 .brand-text strong{font-size:.95rem; color:var(--ink)}
 .brand-text span{font-size:.7rem; color:var(--muted)}
 .spacer{flex:1 1 auto}
+.login-badge{margin-right:.6rem; padding:.2rem .5rem; font-size:.72rem; border-radius:999px; background:#fee2e2; color:#b91c1c; display:none}
+.login-badge.show{display:inline-block}
 .avatar-btn{border:none; background:transparent; padding:0; margin:0; width:36px; height:36px; border-radius:999px; overflow:hidden; box-shadow:0 4px 10px rgba(0,0,0,.12)}
 .avatar-btn img{width:100%; height:100%; object-fit:cover}
 
-/* Bottom sheet (simple) */
+/* Banking hero */
+.bank-hero{position:relative; margin:10px auto 0; max-width:980px; height:120px}
+.bank-hero-bg{
+  position:absolute; inset:0; border-radius:16px;
+  background: radial-gradient(120% 120% at 0% 0%, #9ec2ff33 0%, #2563EB22 40%, transparent 70%),
+              linear-gradient(180deg, #fff, #EAF2FF 100%);
+  box-shadow:var(--shadow);
+}
+.bank-hero-content{position:relative; z-index:1; height:100%; padding:1rem}
+.bank-row{display:flex; align-items:end; justify-content:space-between}
+.bank-title{font-size:1.1rem; font-weight:700; color:var(--ink)}
+.bank-date{font-size:.9rem; color:var(--muted)}
+.bank-chips{display:flex; gap:.5rem; margin-top:.6rem}
+.chip{display:inline-flex; align-items:center; gap:.4rem; padding:.35rem .6rem; border-radius:999px; font-weight:600; font-size:.8rem}
+.chip.primary{background:var(--brand); color:#fff}
+.chip.soft{background:var(--brandSoft); color:var(--brand)}
+
+/* Main */
+.container{padding:1rem; max-width:980px; margin:0 auto}
+.card{background:var(--card); border-radius:16px; box-shadow:var(--shadow); padding:1rem; margin:1rem 0}
+
+.table-wrap{overflow:auto; margin:.8rem 0}
+.table{width:100%; border-collapse:separate; border-spacing:0; font-size:.95rem}
+.table thead th{position:sticky; top:0; background:#fff; color:var(--ink); text-align:center; padding:.6rem .5rem; border-bottom:1px solid #e5e7eb}
+.table tbody td{padding:.55rem .5rem; border-bottom:1px solid #f1f5f9; white-space:nowrap; text-align:center}
+.table tbody tr:nth-child(odd){background:#f9fbff}
+
+.actions{margin-top:1rem}
+.btn{display:inline-flex; align-items:center; gap:.45rem; border:none; border-radius:10px; padding:.65rem .9rem; font-weight:700; cursor:pointer}
+.btn-line{background:var(--line); color:#fff; width:100%; justify-content:center; box-shadow:0 10px 20px rgba(6,199,85,.25)}
+.btn-primary{background:var(--brand); color:#fff}
+.btn-soft{background:var(--brandSoft); color:var(--brand)}
+
+/* Bottom sheet */
 .sheet{position:fixed; inset:0; display:flex; align-items:flex-end; justify-content:center; background:rgba(0,0,0,.25)}
 .sheet.hidden{display:none}
 .sheet-content{background:#fff; width:100%; max-width:520px; border-radius:14px 14px 0 0; box-shadow:var(--shadow); padding:.8rem .9rem}
@@ -48,26 +83,6 @@ body{
 .pf-name{font-weight:700}
 .pf-sub{font-size:.85rem; color:var(--muted)}
 .pf-actions{display:flex; gap:.6rem; margin-top:.8rem}
-.btn{display:inline-flex; align-items:center; gap:.45rem; border:none; border-radius:10px; padding:.6rem .9rem; font-weight:600; cursor:pointer}
-.btn-primary{background:var(--brand); color:#fff; box-shadow:var(--shadow)}
-.btn-soft{background:var(--brandSoft); color:var(--brand)}
-.btn-line{background:var(--line); color:#fff; width:100%; justify-content:center}
-
-/* Main */
-.container{padding:1rem; max-width:920px; margin:0 auto}
-.card{background:var(--card); border-radius:16px; box-shadow:var(--shadow); padding:1rem; margin:1rem 0}
-.hero{border-radius:12px; overflow:hidden; box-shadow:0 8px 18px rgba(0,0,0,.08)}
-.hero img{display:block; width:100%; height:auto}
-.title{margin:.8rem 0 .25rem; color:var(--ink); font-size:1.25rem}
-.subtitle{margin:0; color:var(--muted)}
-
-.table-wrap{overflow:auto; margin:.8rem 0}
-.table{width:100%; border-collapse:separate; border-spacing:0; font-size:.95rem}
-.table thead th{position:sticky; top:0; background:#fff; color:var(--ink); text-align:left; padding:.6rem .5rem; border-bottom:1px solid #e5e7eb}
-.table tbody td{padding:.55rem .5rem; border-bottom:1px solid #f1f5f9; white-space:nowrap}
-.table tbody tr:nth-child(odd){background:#f9fbff}
-
-.actions{margin-top:1rem}
 
 /* Toast */
 .toast{position:fixed; left:50%; transform:translateX(-50%); bottom:82px; background:#101329; color:#e2e8f0; padding:.65rem .9rem; border-radius:12px; box-shadow:0 10px 20px rgba(0,0,0,.15); font-weight:600}
@@ -75,8 +90,3 @@ body{
 
 /* Footer */
 .footer{padding:1rem; text-align:center; color:#64748b; font-size:.9rem;}
-
-/* Responsive tweaks */
-@media (min-width:768px){
-  .title{font-size:1.4rem}
-}
