@@ -4,6 +4,7 @@ const LIFF_ID   = '2005230346-2OVa774O';
 
 let tableHeaders = [];
 let lastData = [];
+let lastTop10 = [];
 let liffReady = false;
 let liffInitOnce = null;
 
@@ -95,7 +96,7 @@ function populateHeaderSelectors(){
 function updateKPI(){
   const amountHeader = document.getElementById('amountHeaderSelect').value;
   if (!amountHeader) { document.getElementById('sumDeposit').textContent = '—'; return; }
-  const sum = lastData.reduce((acc, r) => {
+  const sum = lastTop10.reduce((acc, r) => {
     const v = r[amountHeader];
     return acc + (isNumeric(v) ? toNumber(v) : 0);
   }, 0);
@@ -110,7 +111,8 @@ async function loadData(){
     const res = await fetch(SHEET_URL, { cache: 'no-store' });
     const data = await res.json();
     lastData = Array.isArray(data) ? data : [];
-    renderTable(lastData);
+    lastTop10 = lastData.slice(0,10);
+    renderTable(lastTop10);
     populateHeaderSelectors();
     updateKPI();
   }catch(e){
@@ -210,6 +212,7 @@ async function shareToLine(){
     try{
       const res = await fetch(SHEET_URL, { cache:'no-store' });
       lastData = await res.json();
+      lastTop10 = lastData.slice(0,10);
     }catch(e){ toast('ไม่มีข้อมูลที่จะแชร์'); return; }
   }
   if (!Array.isArray(lastData) || lastData.length===0){ toast('ไม่มีข้อมูลที่จะแชร์'); return; }
@@ -226,7 +229,7 @@ async function shareToLine(){
     return liff.login({ redirectUri: location.href });
   }
 
-  const flex = buildFlexFromData(lastData);
+  const flex = buildFlexFromData(lastTop10);
   try{
     const result = await liff.shareTargetPicker([flex]);
     if (result) toast('แชร์ไปยัง LINE แล้ว');
@@ -238,82 +241,96 @@ async function shareToLine(){
   }
 }
 
-// === Controls: Sorting & PDF ===
-let sortAmountDesc = true;
-let sortCountDesc  = true;
+// === PDF (Thai-safe via html2canvas) ===
+function buildPDFReportNode(){
+  const wrap = document.getElementById('pdfReport');
+  wrap.innerHTML = '';
 
-function applySort(){
-  renderTable(lastData);
-  updateKPI();
-}
+  const h1 = document.createElement('h1');
+  h1.textContent = 'WDBank — รายงาน TOP 10 บัญชีฝากเงิน';
+  wrap.appendChild(h1);
 
-function sortByAmount(){
+  const meta = document.createElement('div');
+  meta.className = 'meta';
+  meta.textContent = `ออมก่อนใช้ • วันที่ ${thaiDateString()}`;
+  wrap.appendChild(meta);
+
+  // KPI
   const amountHeader = document.getElementById('amountHeaderSelect').value;
-  if (!amountHeader) return toast('ยังไม่ได้เลือกคอลัมน์ยอดเงิน');
-  lastData.sort((a,b)=>{
-    const va = isNumeric(a[amountHeader]) ? toNumber(a[amountHeader]) : -Infinity;
-    const vb = isNumeric(b[amountHeader]) ? toNumber(b[amountHeader]) : -Infinity;
-    return sortAmountDesc ? vb - va : va - vb;
-  });
-  sortAmountDesc = !sortAmountDesc;
-  renderTable(lastData);
-  updateKPI();
-}
+  let sum = 0;
+  if (amountHeader){
+    sum = lastTop10.reduce((acc, r)=> acc + (isNumeric(r[amountHeader])? toNumber(r[amountHeader]):0), 0);
+  }
+  const kpi = document.createElement('div');
+  kpi.className = 'kpi';
+  kpi.textContent = `ยอดรวมเงินฝากทั้งหมด (Top 10): ${fmtNumber(sum)} บาท`;
+  wrap.appendChild(kpi);
 
-function sortByCount(){
-  const countHeader = document.getElementById('countHeaderSelect').value;
-  if (!countHeader) return toast('ยังไม่ได้เลือกคอลัมน์จำนวนครั้ง');
-  lastData.sort((a,b)=>{
-    const va = isNumeric(a[countHeader]) ? toNumber(a[countHeader]) : -Infinity;
-    const vb = isNumeric(b[countHeader]) ? toNumber(b[countHeader]) : -Infinity;
-    return sortCountDesc ? vb - va : va - vb;
+  // Table
+  const table = document.createElement('table');
+  const thead = document.createElement('thead');
+  const trh = document.createElement('tr');
+  tableHeaders.forEach(h=>{
+    const th = document.createElement('th'); th.textContent = h; trh.appendChild(th);
   });
-  sortCountDesc = !sortCountDesc;
-  renderTable(lastData);
-  updateKPI();
+  thead.appendChild(trh); table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  lastTop10.forEach(row=>{
+    const tr = document.createElement('tr');
+    tableHeaders.forEach(h=>{
+      const td = document.createElement('td');
+      const v = row[h];
+      td.textContent = isAccountHeader(h) ? String(v ?? '') : (isNumeric(v) ? fmtNumber(v) : String(v ?? ''));
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  wrap.appendChild(table);
+
+  return wrap;
 }
 
 async function exportPDF(){
-  if (!Array.isArray(lastData) || lastData.length===0) return toast('ไม่มีข้อมูลสำหรับรายงาน');
+  if (!Array.isArray(lastTop10) || lastTop10.length===0) return toast('ไม่มีข้อมูลสำหรับรายงาน');
+  const reportNode = buildPDFReportNode();
+  const canvas = await html2canvas(reportNode, { scale: 2, backgroundColor: '#ffffff' });
+  const imgData = canvas.toDataURL('image/png');
+
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation:'p', unit:'pt', format:'a4' });
+  const pdf = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4' });
+  const pageWidth  = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
 
-  const marginX = 42, marginY = 48;
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(16);
-  doc.text('WDBank — รายงาน TOP 10 บัญชีฝากเงิน', marginX, marginY);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(11);
-  doc.text(`ออมก่อนใช้ • วันที่ ${thaiDateString()}`, marginX, marginY+18);
+  const margin = 24;
+  const imgWidth = pageWidth - margin*2;
+  const imgHeight = canvas.height * imgWidth / canvas.width;
 
-  // KPI line
-  const amountHeader = document.getElementById('amountHeaderSelect').value;
-  if (amountHeader){
-    const sum = lastData.reduce((acc, r)=> acc + (isNumeric(r[amountHeader])? toNumber(r[amountHeader]) : 0), 0);
-    doc.text(`ยอดรวมเงินฝากทั้งหมด: ${fmtNumber(sum)} บาท`, marginX, marginY+36);
+  if (imgHeight <= pageHeight - margin*2){
+    pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
+  }else{
+    let sH = 0;
+    const pageCanvas = document.createElement('canvas');
+    const ctx = pageCanvas.getContext('2d');
+    const ratio = imgWidth / canvas.width;
+    const sliceHeightPx = (pageHeight - margin*2) / ratio;
+
+    while (sH < canvas.height){
+      const slice = Math.min(sliceHeightPx, canvas.height - sH);
+      pageCanvas.width  = canvas.width;
+      pageCanvas.height = slice;
+      ctx.drawImage(canvas, 0, sH, canvas.width, slice, 0, 0, canvas.width, slice);
+      const sliceData = pageCanvas.toDataURL('image/png');
+      const sliceHpt = slice * ratio;
+
+      pdf.addImage(sliceData, 'PNG', margin, margin, imgWidth, sliceHpt);
+      sH += slice;
+      if (sH < canvas.height) pdf.addPage();
+    }
   }
 
-  // Table (current top 10 view)
-  const headers = [tableHeaders];
-  const body = lastData.slice(0,10).map(row => tableHeaders.map(h => {
-    if (isAccountHeader(h)) return String(row[h] ?? '');
-    return isNumeric(row[h]) ? fmtNumber(row[h]) : String(row[h] ?? '');
-  }));
-
-  doc.autoTable({
-    startY: marginY + 52,
-    head: headers,
-    body,
-    styles: { font: 'helvetica', fontSize: 9, cellPadding: 4, halign: 'center' },
-    headStyles: { fillColor: [37, 99, 235], halign:'center' },
-    theme: 'grid',
-    margin: { left: marginX, right: marginX }
-  });
-
-  doc.setFontSize(9);
-  doc.text('เอกสารนี้สร้างจากระบบ WDBank (ออมก่อนใช้)', marginX, doc.internal.pageSize.getHeight() - 30);
-
-  doc.save(`WDBank-รายงานTOP10-${new Date().toISOString().slice(0,10)}.pdf`);
+  pdf.save(`WDBank-รายงานTOP10-${new Date().toISOString().slice(0,10)}.pdf`);
 }
 
 // === Bottom Sheet ===
@@ -328,9 +345,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadProfile();
 
   document.getElementById('btnShare').addEventListener('click', shareToLine);
-  document.getElementById('sortAmount').addEventListener('click', sortByAmount);
-  document.getElementById('sortCount').addEventListener('click', sortByCount);
   document.getElementById('btnExportPDF').addEventListener('click', exportPDF);
-  document.getElementById('amountHeaderSelect').addEventListener('change', ()=>{ updateKPI(); renderTable(lastData); });
+  document.getElementById('amountHeaderSelect').addEventListener('change', ()=>{ updateKPI(); });
   document.getElementById('countHeaderSelect').addEventListener('change', ()=>{ /* no-op */ });
 });

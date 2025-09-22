@@ -19,9 +19,9 @@
   <!-- LINE LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script>
 
-  <!-- jsPDF + autoTable for PDF export -->
+  <!-- jsPDF + html2canvas for Thai PDF -->
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
   <link rel="stylesheet" href="./styles.css" />
 </head>
@@ -62,7 +62,7 @@
     <section class="grid">
       <div class="card kpi">
         <div class="kpi-head">
-          <div class="kpi-title">ยอดรวมเงินฝากทั้งหมด</div>
+          <div class="kpi-title">ยอดรวมเงินฝากทั้งหมด (Top 10)</div>
           <div class="kpi-sub">ข้อมูล ณ <span id="asOfThai"></span></div>
         </div>
         <div class="kpi-value" id="sumDeposit">—</div>
@@ -80,10 +80,6 @@
           </div>
         </div>
         <div class="ctrl-row">
-          <div class="btn-group">
-            <button id="sortAmount" class="btn btn-soft"><i class="fa-solid fa-arrow-down-1-9"></i> เรียงตามยอด</button>
-            <button id="sortCount" class="btn btn-soft"><i class="fa-solid fa-arrow-down-1-9"></i> เรียงตามจำนวนครั้ง</button>
-          </div>
           <div class="btn-group-right">
             <button id="btnExportPDF" class="btn btn-primary"><i class="fa-solid fa-file-pdf"></i> ออกรายงาน PDF</button>
           </div>
@@ -105,6 +101,9 @@
       </div>
     </section>
   </main>
+
+  <!-- Hidden report container for PDF render -->
+  <div id="pdfReport" class="pdf-report" aria-hidden="true"></div>
 
   <!-- Bottom Sheet Profile -->
   <div id="profileSheet" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">

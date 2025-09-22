@@ -77,7 +77,6 @@ select{padding:.5rem .6rem; border-radius:10px; border:1px solid #e5e7eb; outlin
 .btn-line{background:var(--line); color:#fff; width:100%; justify-content:center; box-shadow:0 10px 20px rgba(6,199,85,.25)}
 .btn-primary{background:var(--brand); color:#fff}
 .btn-soft{background:var(--brandSoft); color:var(--brand)}
-.btn-group{display:flex; gap:.5rem; flex-wrap:wrap}
 .btn-group-right{margin-left:auto; display:flex; gap:.5rem}
 
 /* Table */
@@ -88,6 +87,15 @@ select{padding:.5rem .6rem; border-radius:10px; border:1px solid #e5e7eb; outlin
 .table tbody tr:nth-child(odd){background:#f9fbff}
 
 .actions{margin-top:1rem}
+
+/* Hidden PDF report */
+.pdf-report{position:absolute; left:-99999px; top:-99999px; width:794px; padding:24px; font-family:Kanit, sans-serif; color:#111; background:#fff}
+.pdf-report h1{margin:0 0 4px 0; font-size:20px}
+.pdf-report .meta{color:#475569; margin-bottom:6px}
+.pdf-report .kpi{margin:6px 0 10px 0; font-weight:700}
+.pdf-report table{width:100%; border-collapse:collapse; font-size:12px}
+.pdf-report th, .pdf-report td{border:1px solid #e5e7eb; padding:6px 8px; text-align:center}
+.pdf-report thead th{background:#eff6ff}
 
 /* Bottom sheet */
 .sheet{position:fixed; inset:0; display:flex; align-items:flex-end; justify-content:center; background:rgba(0,0,0,.25)}
