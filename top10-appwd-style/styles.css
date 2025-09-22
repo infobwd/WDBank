@@ -38,7 +38,7 @@ body{
 .avatar-btn img{width:100%; height:100%; object-fit:cover}
 
 /* Banking hero */
-.bank-hero{position:relative; margin:10px auto 0; max-width:980px; height:120px}
+.bank-hero{position:relative; margin:10px auto 0; max-width:980px; height:132px}
 .bank-hero-bg{
   position:absolute; inset:0; border-radius:16px;
   background: radial-gradient(120% 120% at 0% 0%, #9ec2ff33 0%, #2563EB22 40%, transparent 70%),
@@ -53,6 +53,7 @@ body{
 .chip{display:inline-flex; align-items:center; gap:.4rem; padding:.35rem .6rem; border-radius:999px; font-weight:600; font-size:.8rem}
 .chip.primary{background:var(--brand); color:#fff}
 .chip.soft{background:var(--brandSoft); color:var(--brand)}
+.bank-explain{margin-top:.5rem; font-size:.9rem; color:#334155; background:#F1F5FF; border-left:4px solid var(--brand); padding:.5rem .6rem; border-radius:8px}
 
 /* Container + Card */
 .container{padding:1rem; max-width:980px; margin:0 auto}
@@ -64,6 +65,14 @@ body{
 .table thead th{position:sticky; top:0; background:#fff; color:var(--ink); text-align:center; padding:.6rem .5rem; border-bottom:1px solid #e5e7eb}
 .table tbody td{padding:.55rem .5rem; border-bottom:1px solid #f1f5f9; white-space:nowrap; text-align:center}
 .table tbody tr:nth-child(odd){background:#f9fbff}
+
+/* Account badge style */
+.acc-badge{
+  display:inline-block; padding:.25rem .5rem; border-radius:999px;
+  background:#0ea5e926; color:#0f172a; font-weight:700;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+  letter-spacing:.5px;
+}
 
 /* Buttons */
 .btn{display:inline-flex; align-items:center; gap:.45rem; border:none; border-radius:10px; padding:.65rem .9rem; font-weight:700; cursor:pointer}
@@ -77,7 +86,6 @@ body{
 .pdf-report .hdr img{width:44px; height:44px; object-fit:contain}
 .pdf-report h1{margin:0; font-size:20px}
 .pdf-report .meta{color:#475569; margin-bottom:6px}
-.pdf-report .kpi{margin:6px 0 10px 0; font-weight:700}
 .pdf-report table{width:100%; border-collapse:collapse; font-size:12px}
 .pdf-report th, .pdf-report td{border:1px solid #e5e7eb; padding:6px 8px; text-align:center}
 .pdf-report thead th{background:#eff6ff}

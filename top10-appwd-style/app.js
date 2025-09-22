@@ -27,22 +27,27 @@ function toast(msg){
   setTimeout(()=>t.classList.add('hidden'), 2200);
 }
 
-// Heuristic: balance header detection
+// Heuristic: headers
 function isAccountHeader(h){ return /(เลข\s*บัญชี|บัญชี|account)/i.test(String(h)); }
+function isCountHeader(h){ return /(จำนวน|ครั้ง|count)/i.test(String(h)); }
 function getBalanceHeader(){
-  // 1) Explicit 'คงเหลือ'
   let h = tableHeaders.find(h => /(คงเหลือ|ยอดคงเหลือ)/i.test(String(h)));
   if (h) return h;
-  // 2) Generic amount-like headers
   h = tableHeaders.find(h => /(ยอด|รวม|amount|total|เงิน)/i.test(String(h)));
   if (h) return h;
-  // 3) First numeric-looking column across first row
   if (lastTop10.length){
     const r = lastTop10[0];
     const k = Object.keys(r).find(k => isNumeric(r[k]));
     if (k) return k;
   }
   return null;
+}
+
+// Format account number (no commas), group every 4 digits
+function formatAccountDisplay(val){
+  const raw = String(val ?? '').replace(/\s+/g, '');
+  const grouped = raw.replace(/(\d{4})(?=\d)/g, '$1 ').trim();
+  return grouped;
 }
 
 // === Rendering ===
@@ -64,13 +69,16 @@ function renderTable(data){
     thead.appendChild(th);
   });
   tbody.innerHTML = '';
-  data.forEach((row, idx) => {
+  data.forEach((row) => {
     const tr = document.createElement('tr');
     tableHeaders.forEach(h => {
       const td = document.createElement('td');
       const raw = row[h];
       if (isAccountHeader(h)) {
-        td.textContent = String(raw ?? '');
+        const span = document.createElement('span');
+        span.className = 'acc-badge';
+        span.textContent = formatAccountDisplay(raw);
+        td.appendChild(span);
       } else {
         td.textContent = isNumeric(raw) ? fmtNumber(raw) : String(raw ?? '');
       }
@@ -78,6 +86,43 @@ function renderTable(data){
     });
     tbody.appendChild(tr);
   });
+}
+
+// === Data & Explanation ===
+function computeAndRenderExplain(){
+  const explain = document.getElementById('explain');
+  if (!Array.isArray(lastData) || lastData.length === 0 || lastTop10.length === 0){ explain.textContent=''; return; }
+  const countHeader = tableHeaders.find(isCountHeader);
+  if (!countHeader){ explain.textContent = '10 อันดับนี้ถูกคัดจากข้อมูลสรุปของโรงเรียน'; return; }
+
+  const counts = lastData.map(r => toNumber(r[countHeader])).filter(n => Number.isFinite(n));
+  if (counts.length === 0){ explain.textContent = '10 อันดับนี้ถูกคัดจากข้อมูลสรุปของโรงเรียน'; return; }
+  const avg = counts.reduce((a,b)=>a+b,0)/counts.length;
+  const allMeet = lastTop10.every(r => {
+    const v = toNumber(r[countHeader]);
+    return Number.isFinite(v) ? v >= avg : false;
+  });
+  const avgStr = Math.round(avg).toLocaleString('th-TH');
+  explain.innerHTML = `บัญชีทั้ง 10 บัญชีนี้มียอด <strong>จำนวนครั้งที่ฝากมากกว่าหรือเท่ากับค่าเฉลี่ย</strong> ของทุกบัญชีในโรงเรียน (ค่าเฉลี่ยประมาณ <strong>${avgStr} ครั้ง</strong>)` + (allMeet ? '' : ' *หมายเหตุ: บางบัญชีอาจต่ำกว่าเล็กน้อย');
+}
+
+// === LIFF Profile (for avatar) ===
+async function loadProfileAvatar(){
+  try{
+    await liff.init({ liffId: LIFF_ID });
+    if (liff.isLoggedIn()){
+      const prof = await liff.getProfile();
+      if (prof?.pictureUrl){
+        const avatar = document.getElementById('avatar');
+        avatar.src = prof.pictureUrl;
+      }
+      document.getElementById('loginBadge').classList.remove('show');
+    }else{
+      document.getElementById('loginBadge').classList.add('show');
+    }
+  }catch(e){
+    document.getElementById('loginBadge').classList.add('show');
+  }
 }
 
 // === Data ===
@@ -89,6 +134,7 @@ async function loadData(){
     lastData = Array.isArray(data) ? data : [];
     lastTop10 = lastData.slice(0,10);
     renderTable(lastTop10);
+    computeAndRenderExplain();
   }catch(e){
     console.error(e);
     renderTable([]);
@@ -120,7 +166,7 @@ async function shareToLine(){
   const headerBox = { type:'box', layout:'horizontal', contents: headers.map(h => ({ type:'text', text: cut(h,12), size:'xs', weight:'bold', flex:1, align:'center' })) };
   const dataRows = lastTop10.map((row, idx) => ({
     type:'box', layout:'horizontal', backgroundColor: idx%2? '#FFFFFF':'#F5F6FA',
-    contents: headers.map(h => ({ type:'text', text: cut(isAccountHeader(h) ? String(row[h] ?? '') : (isNumeric(row[h])? fmtNumber(row[h]): (row[h] ?? '')), 16), size:'xs', flex:1, align:'center' }))
+    contents: headers.map(h => ({ type:'text', text: cut(isAccountHeader(h) ? formatAccountDisplay(row[h]) : (isNumeric(row[h])? fmtNumber(row[h]): (row[h] ?? '')), 16), size:'xs', flex:1, align:'center' }))
   }));
 
   const flex = {
@@ -172,7 +218,7 @@ function buildPDFReportNode(){
   hdr.appendChild(titleBlock);
   wrap.appendChild(hdr);
 
-    // Table
+  // Table
   const table = document.createElement('table');
   const thead = document.createElement('thead');
   const trh = document.createElement('tr');
@@ -187,7 +233,8 @@ function buildPDFReportNode(){
     tableHeaders.forEach(h=>{
       const td = document.createElement('td');
       const v = row[h];
-      td.textContent = isAccountHeader(h) ? String(v ?? '') : (isNumeric(v) ? fmtNumber(v) : String(v ?? ''));
+      const valText = isAccountHeader(h) ? formatAccountDisplay(v) : (isNumeric(v) ? fmtNumber(v) : String(v ?? ''));
+      td.textContent = valText;
       tr.appendChild(td);
     });
     tbody.appendChild(tr);
@@ -250,6 +297,7 @@ async function exportPDF(){
 // === Events ===
 document.addEventListener('DOMContentLoaded', () => {
   loadData();
+  loadProfileAvatar();
   document.getElementById('btnShare').addEventListener('click', shareToLine);
   document.getElementById('btnExportPDF').addEventListener('click', exportPDF);
 });
