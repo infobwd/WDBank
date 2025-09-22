@@ -1,0 +1,82 @@
+
+:root{
+  --brand:#2563EB;
+  --brandSoft:#EAF2FF;
+  --ink:#0f172a;
+  --text:#334155;
+  --muted:#64748b;
+  --card:#ffffff;
+  --bg:#f6f8ff;
+  --line:#06C755;
+  --shadow:0 10px 24px rgba(37,99,235,.12);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family:Kanit,system-ui,-apple-system,Segoe UI,Roboto,Arial,"Noto Sans Thai",sans-serif;
+  background:linear-gradient(180deg,var(--brandSoft) 0%, #fff 55%);
+  color:var(--text);
+}
+
+/* App bar */
+.appbar{
+  position:sticky; top:0; z-index:50;
+  display:flex; align-items:center;
+  padding:.6rem .9rem; background:#fff;
+  box-shadow:var(--shadow);
+}
+.brand{display:flex; align-items:center; gap:.6rem}
+.brand-mark{width:28px; height:28px; border-radius:8px; background:var(--brand); box-shadow:0 6px 14px rgba(37,99,235,.25)}
+.brand-text{display:flex; flex-direction:column; line-height:1}
+.brand-text strong{font-size:.95rem; color:var(--ink)}
+.brand-text span{font-size:.7rem; color:var(--muted)}
+.spacer{flex:1 1 auto}
+.avatar-btn{border:none; background:transparent; padding:0; margin:0; width:36px; height:36px; border-radius:999px; overflow:hidden; box-shadow:0 4px 10px rgba(0,0,0,.12)}
+.avatar-btn img{width:100%; height:100%; object-fit:cover}
+
+/* Bottom sheet (simple) */
+.sheet{position:fixed; inset:0; display:flex; align-items:flex-end; justify-content:center; background:rgba(0,0,0,.25)}
+.sheet.hidden{display:none}
+.sheet-content{background:#fff; width:100%; max-width:520px; border-radius:14px 14px 0 0; box-shadow:var(--shadow); padding:.8rem .9rem}
+.sheet-header{display:flex; align-items:center; justify-content:space-between}
+.sheet-title{font-weight:700}
+.sheet-close{border:none; background:transparent; font-size:1.2rem}
+.pf-row{display:flex; gap:.8rem; align-items:center; margin-top:.6rem}
+.pf-avatar{width:54px; height:54px; border-radius:999px; object-fit:cover; box-shadow:0 4px 10px rgba(0,0,0,.12)}
+.pf-info{display:flex; flex-direction:column}
+.pf-name{font-weight:700}
+.pf-sub{font-size:.85rem; color:var(--muted)}
+.pf-actions{display:flex; gap:.6rem; margin-top:.8rem}
+.btn{display:inline-flex; align-items:center; gap:.45rem; border:none; border-radius:10px; padding:.6rem .9rem; font-weight:600; cursor:pointer}
+.btn-primary{background:var(--brand); color:#fff; box-shadow:var(--shadow)}
+.btn-soft{background:var(--brandSoft); color:var(--brand)}
+.btn-line{background:var(--line); color:#fff; width:100%; justify-content:center}
+
+/* Main */
+.container{padding:1rem; max-width:920px; margin:0 auto}
+.card{background:var(--card); border-radius:16px; box-shadow:var(--shadow); padding:1rem; margin:1rem 0}
+.hero{border-radius:12px; overflow:hidden; box-shadow:0 8px 18px rgba(0,0,0,.08)}
+.hero img{display:block; width:100%; height:auto}
+.title{margin:.8rem 0 .25rem; color:var(--ink); font-size:1.25rem}
+.subtitle{margin:0; color:var(--muted)}
+
+.table-wrap{overflow:auto; margin:.8rem 0}
+.table{width:100%; border-collapse:separate; border-spacing:0; font-size:.95rem}
+.table thead th{position:sticky; top:0; background:#fff; color:var(--ink); text-align:left; padding:.6rem .5rem; border-bottom:1px solid #e5e7eb}
+.table tbody td{padding:.55rem .5rem; border-bottom:1px solid #f1f5f9; white-space:nowrap}
+.table tbody tr:nth-child(odd){background:#f9fbff}
+
+.actions{margin-top:1rem}
+
+/* Toast */
+.toast{position:fixed; left:50%; transform:translateX(-50%); bottom:82px; background:#101329; color:#e2e8f0; padding:.65rem .9rem; border-radius:12px; box-shadow:0 10px 20px rgba(0,0,0,.15); font-weight:600}
+.toast.hidden{display:none}
+
+/* Footer */
+.footer{padding:1rem; text-align:center; color:#64748b; font-size:.9rem;}
+
+/* Responsive tweaks */
+@media (min-width:768px){
+  .title{font-size:1.4rem}
+}

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="th" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>TOP 10 — ฝากเงินสูง & ฝาก ≥ ค่าเฉลี่ย | WD School</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <!-- LINE LIFF SDK -->
+  <script src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script>
+
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <!-- App Bar -->
+  <header class="appbar">
+    <div class="brand">
+      <div class="brand-mark"></div>
+      <div class="brand-text">
+        <strong>APPWD</strong>
+        <span>WD School</span>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <button id="btnProfile" class="avatar-btn" aria-label="โปรไฟล์">
+      <img id="avatar" src="./assets/avatar.svg" alt="avatar" />
+    </button>
+    <div id="profileSheet" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+      <div class="sheet-content">
+        <div class="sheet-header">
+          <div class="sheet-title" id="sheetTitle">โปรไฟล์</div>
+          <button class="sheet-close" id="sheetClose" aria-label="ปิด"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="sheet-body">
+          <div class="pf-row">
+            <img id="pfAvatar" class="pf-avatar" src="./assets/avatar.svg" alt="avatar" />
+            <div class="pf-info">
+              <div class="pf-name" id="pfName">Guest</div>
+              <div class="pf-sub" id="pfSub">ยังไม่ได้เข้าสู่ระบบ LINE</div>
+            </div>
+          </div>
+          <div class="pf-actions">
+            <button id="btnLineLogin" class="btn btn-primary"><i class="fa-brands fa-line"></i> Login with LINE</button>
+            <button id="btnLineOpen" class="btn btn-soft">เปิดใน LINE</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main class="container">
+    <section class="card">
+      <div class="hero">
+        <img src="https://raw.githubusercontent.com/infobwd/wdconnect/main/top10.png" alt="TOP10" />
+      </div>
+      <h1 class="title">TOP 10 บัญชีฝากเงินสูง & จำนวนครั้ง ≥ ค่าเฉลี่ย</h1>
+      <p class="subtitle">โรงเรียนบ้านวังด้ง • <span id="today"></span></p>
+
+      <div class="table-wrap">
+        <table class="table" id="dataTable" aria-label="Top 10 Table">
+          <thead><tr id="table-head"></tr></thead>
+          <tbody id="table-body"></tbody>
+        </table>
+      </div>
+
+      <div class="actions">
+        <button id="btnShare" class="btn btn-line"><i class="fa-brands fa-line"></i> แชร์ไปยัง LINE</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden" role="status"></div>
+
+  <footer class="footer">© 2024 WD Team • Made with ❤️</footer>
+
+  <script src="./app.js"></script>
+</body>
+</html>
