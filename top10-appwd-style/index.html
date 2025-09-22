@@ -1,1 +1,231 @@
-<!doctype html><meta charset='utf-8'><title>WDBank v5</title><p>เซสชันล้างไฟล์ระหว่างทาง โปรดให้ฉันรันอีกครั้งเพื่อสร้างแพ็กเต็ม v5</p>
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>WDBank — รายงานรวม</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <!-- LINE LIFF SDK -->
+  <script src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script>
+
+  <!-- jsPDF + html2canvas -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <!-- App Bar -->
+  <header class="appbar">
+    <div class="brand">
+      <img src="./assets/crest.svg" class="crest" alt="ตราโรงเรียน" />
+      <div class="brand-text">
+        <strong>WDBank</strong>
+        <span>ออมก่อนใช้</span>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <div id="loginBadge" class="login-badge">ยังไม่เข้าสู่ระบบ</div>
+    <button id="btnProfile" class="avatar-btn" aria-label="โปรไฟล์">
+      <img id="avatar" src="./assets/avatar.svg" alt="avatar" />
+    </button>
+  </header>
+
+  <!-- Summary All-stars -->
+  <main class="container pb-safe">
+    <section class="card">
+      <div class="section-head">
+        <div>
+          <div class="title">3 บัญชีเด่น (เข้าเงื่อนไขครบทั้ง 3)</div>
+          <div class="subtitle">วันที่ <span id="todayThai" class="sk sk-text"></span></div>
+        </div>
+        <div class="actions">
+          <button id="share-allstars" class="btn btn-line"><i class="fa-brands fa-line"></i> แชร์การ์ดนี้</button>
+        </div>
+      </div>
+      <div id="allstars" class="allstars">
+        <div class="star-card sk"><div class="sk sk-title"></div><div class="sk sk-text"></div></div>
+        <div class="star-card sk"><div class="sk sk-title"></div><div class="sk sk-text"></div></div>
+        <div class="star-card sk"><div class="sk sk-title"></div><div class="sk sk-text"></div></div>
+      </div>
+    </section>
+
+    <!-- Weekly KPI cards -->
+    <section class="card">
+      <div class="section-head">
+        <div class="title">สรุปสัปดาห์นี้</div>
+        <div class="actions wrap">
+          <button id="pdf-week" class="btn btn-primary sm"><i class="fa-solid fa-file-pdf"></i> PDF สัปดาห์นี้</button>
+          <button id="pdf-month" class="btn btn-primary sm"><i class="fa-solid fa-file-pdf"></i> PDF เดือนนี้</button>
+          <button id="pdf-classsum" class="btn btn-primary sm"><i class="fa-solid fa-file-pdf"></i> PDF คงเหลือรายชั้น</button>
+          <button id="pdf-savings" class="btn btn-primary sm"><i class="fa-solid fa-piggy-bank"></i> PDF ออมสิน</button>
+        </div>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi">
+          <div class="kpi-h">ฝากสัปดาห์นี้</div>
+          <div class="kpi-v sk sk-title" id="kpiDepCount">-</div>
+          <div class="kpi-sub sk sk-text" id="kpiDepAmt">-</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-h">ถอนสัปดาห์นี้</div>
+          <div class="kpi-v sk sk-title" id="kpiWdrCount">-</div>
+          <div class="kpi-sub sk sk-text" id="kpiWdrAmt">-</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-h">เงินไหลสุทธิ</div>
+          <div class="kpi-v sk sk-title" id="kpiNet">-</div>
+          <div class="kpi-sub">ฝาก − ถอน</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-h">ชั้นที่เคลื่อนไหวสูงสุด</div>
+          <div class="kpi-v sk sk-title" id="kpiTopClass">-</div>
+          <div class="kpi-sub sk sk-text" id="kpiTopClassDetail">-</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tabs -->
+    <section class="">
+      <div class="tabs scroll-x">
+        <button class="tab active" data-tab="amount"><i class="fa-solid fa-trophy"></i> ยอดเงินสูง • ฝาก ≥ ค่าเฉลี่ย</button>
+        <button class="tab" data-tab="frequent"><i class="fa-solid fa-clock-rotate-left"></i> ฝากถี่มาก</button>
+        <button class="tab" data-tab="depositonly"><i class="fa-solid fa-ban"></i> ไม่เคยถอน • ฝาก ≥ ค่าเฉลี่ย</button>
+        <button class="tab" data-tab="latest"><i class="fa-solid fa-list-ol"></i> 10 รายการล่าสุด</button>
+      </div>
+
+      <!-- Panels -->
+      <div id="panel-amount" class="panel show">
+        <section class="card">
+          <div class="section-head stack-sm">
+            <div>
+              <div class="title">TOP 10 ยอดเงินสูงสุด (และฝาก ≥ ค่าเฉลี่ย)</div>
+              <div class="desc">บัญชีที่มีเงินคงเหลือสูงและจำนวนครั้งฝากไม่น้อยกว่าค่าเฉลี่ยของทั้งโรงเรียน</div>
+            </div>
+            <div class="actions wrap">
+              <button id="pdf-amount" class="btn btn-primary sm"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+              <button id="share-amount" class="btn btn-line sm"><i class="fa-brands fa-line"></i> แชร์</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="table" id="table-amount">
+              <thead><tr id="th-amount"></tr></thead>
+              <tbody id="tb-amount">
+                <tr class="sk"><td class="sk sk-text" colspan="5">กำลังโหลด…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <div id="panel-frequent" class="panel">
+        <section class="card">
+          <div class="section-head stack-sm">
+            <div>
+              <div class="title">TOP 10 บัญชีฝากถี่มาก</div>
+              <div class="desc">โฟกัสเฉพาะ “ความถี่ในการฝาก” โดยไม่ดูยอดเงินคงเหลือ</div>
+            </div>
+            <div class="actions wrap">
+              <button id="pdf-frequent" class="btn btn-primary sm"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+              <button id="share-frequent" class="btn btn-line sm"><i class="fa-brands fa-line"></i> แชร์</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="table" id="table-frequent">
+              <thead><tr id="th-frequent"></tr></thead>
+              <tbody id="tb-frequent">
+                <tr class="sk"><td class="sk sk-text" colspan="5">กำลังโหลด…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <div id="panel-depositonly" class="panel">
+        <section class="card">
+          <div class="section-head stack-sm">
+            <div>
+              <div class="title">TOP 10 ไม่เคยถอน และฝาก ≥ ค่าเฉลี่ย</div>
+              <div class="desc">เหมาะยกย่องการออมระยะยาว ไม่พบรายการถอน และฝากบ่อยไม่น้อยกว่าค่าเฉลี่ย</div>
+            </div>
+            <div class="actions wrap">
+              <button id="pdf-depositonly" class="btn btn-primary sm"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+              <button id="share-depositonly" class="btn btn-line sm"><i class="fa-brands fa-line"></i> แชร์</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="table" id="table-depositonly">
+              <thead><tr id="th-depositonly"></tr></thead>
+              <tbody id="tb-depositonly">
+                <tr class="sk"><td class="sk sk-text" colspan="5">กำลังโหลด…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <div id="panel-latest" class="panel">
+        <section class="card">
+          <div class="section-head">
+            <div class="title">10 รายการฝากถอนล่าสุด</div>
+          </div>
+          <div class="table-wrap">
+            <table class="table" id="table-latest">
+              <thead><tr id="th-latest"></tr></thead>
+              <tbody id="tb-latest">
+                <tr class="sk"><td class="sk sk-text" colspan="5">กำลังโหลด…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <!-- Reports Hub Modal -->
+  <div id="reportsModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="reportsTitle">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div id="reportsTitle" class="title"><i class="fa-solid fa-file-waveform"></i> ศูนย์รายงาน</div>
+        <button class="btn btn-ghost" id="closeReports"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-grid">
+        <button class="btn btn-primary" id="m-pdf-amount"><i class="fa-solid fa-trophy"></i> TOP 10 ยอดสูง</button>
+        <button class="btn btn-primary" id="m-pdf-frequent"><i class="fa-solid fa-clock-rotate-left"></i> TOP 10 ฝากถี่</button>
+        <button class="btn btn-primary" id="m-pdf-deposit"><i class="fa-solid fa-ban"></i> TOP 10 ไม่เคยถอน</button>
+        <button class="btn btn-primary" id="m-pdf-week"><i class="fa-solid fa-calendar-week"></i> สรุปสัปดาห์นี้</button>
+        <button class="btn btn-primary" id="m-pdf-month"><i class="fa-solid fa-calendar-days"></i> สรุปเดือนนี้</button>
+        <button class="btn btn-primary" id="m-pdf-class"><i class="fa-solid fa-layer-group"></i> คงเหลือรายชั้น</button>
+        <button class="btn btn-primary" id="m-pdf-savings"><i class="fa-solid fa-piggy-bank"></i> บัญชีออมสิน (TRUE)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Navbar -->
+  <nav class="navbar">
+    <button class="nav-btn" data-tab="amount"><i class="fa-solid fa-baht-sign"></i><span>ยอดสูง</span></button>
+    <button class="nav-btn" data-tab="frequent"><i class="fa-solid fa-arrows-rotate"></i><span>ฝากถี่</span></button>
+    <button class="nav-btn" data-tab="latest"><i class="fa-solid fa-list"></i><span>ล่าสุด</span></button>
+    <button class="nav-btn" id="openReports"><i class="fa-solid fa-file-invoice"></i><span>รายงาน</span></button>
+    <button class="nav-btn" id="navProfile"><i class="fa-solid fa-user"></i><span>โปรไฟล์</span></button>
+  </nav>
+
+  <!-- Hidden report container -->
+  <div id="pdfReport" class="pdf-report" aria-hidden="true"></div>
+
+  <footer class="footer">© 2024 WDBank • ออมก่อนใช้</footer>
+
+  <script src="./app.js"></script>
+</body>
+</html>
