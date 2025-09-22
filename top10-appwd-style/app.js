@@ -5,8 +5,6 @@ const LIFF_ID   = '2005230346-2OVa774O';
 let tableHeaders = [];
 let lastData = [];
 let lastTop10 = [];
-let liffReady = false;
-let liffInitOnce = null;
 
 // === Utilities ===
 const isNumeric = (val) => {
@@ -29,16 +27,22 @@ function toast(msg){
   setTimeout(()=>t.classList.add('hidden'), 2200);
 }
 
-// Heuristic: headers
+// Heuristic: balance header detection
 function isAccountHeader(h){ return /(เลข\s*บัญชี|บัญชี|account)/i.test(String(h)); }
-function isCountHeader(h){ return /(จำนวน|ครั้ง|count)/i.test(String(h)); }
-function isAmountHeader(h){ return /(คงเหลือ|ยอดคงเหลือ|ยอด|รวม|amount|total|เงิน)/i.test(String(h)); }
-
 function getBalanceHeader(){
-  const h1 = tableHeaders.find(h => /(คงเหลือ|ยอดคงเหลือ)/i.test(String(h)));
-  if (h1) return h1;
-  const sel = document.getElementById('amountHeaderSelect');
-  return sel && sel.value ? sel.value : null;
+  // 1) Explicit 'คงเหลือ'
+  let h = tableHeaders.find(h => /(คงเหลือ|ยอดคงเหลือ)/i.test(String(h)));
+  if (h) return h;
+  // 2) Generic amount-like headers
+  h = tableHeaders.find(h => /(ยอด|รวม|amount|total|เงิน)/i.test(String(h)));
+  if (h) return h;
+  // 3) First numeric-looking column across first row
+  if (lastTop10.length){
+    const r = lastTop10[0];
+    const k = Object.keys(r).find(k => isNumeric(r[k]));
+    if (k) return k;
+  }
+  return null;
 }
 
 // === Rendering ===
@@ -60,7 +64,7 @@ function renderTable(data){
     thead.appendChild(th);
   });
   tbody.innerHTML = '';
-  data.forEach(row => {
+  data.forEach((row, idx) => {
     const tr = document.createElement('tr');
     tableHeaders.forEach(h => {
       const td = document.createElement('td');
@@ -76,48 +80,15 @@ function renderTable(data){
   });
 }
 
-function populateHeaderSelectors(){
-  const amountSel = document.getElementById('amountHeaderSelect');
-  const countSel  = document.getElementById('countHeaderSelect');
-  amountSel.innerHTML = ''; countSel.innerHTML = '';
-
-  tableHeaders.forEach(h => {
-    const opt1 = document.createElement('option'); opt1.value = h; opt1.textContent = h;
-    const opt2 = document.createElement('option'); opt2.value = h; opt2.textContent = h;
-    amountSel.appendChild(opt1); countSel.appendChild(opt2);
-  });
-
-  let guessAmount = tableHeaders.find(h => /(คงเหลือ|ยอดคงเหลือ)/i.test(String(h))) || 
-                    tableHeaders.find(h => /(ยอด|รวม|amount|total|เงิน)/i.test(String(h)));
-  let guessCount  = tableHeaders.find(isCountHeader);
-
-  if (guessAmount) amountSel.value = guessAmount;
-  if (guessCount)  countSel.value  = guessCount;
-}
-
-function updateKPI(){
-  const amountHeader = getBalanceHeader();
-  const el = document.getElementById('sumDeposit');
-  if (!amountHeader) { el.textContent = '—'; return; }
-  const sum = lastTop10.reduce((acc, r) => {
-    const v = r[amountHeader];
-    return acc + (isNumeric(v) ? toNumber(v) : 0);
-  }, 0);
-  el.textContent = fmtNumber(sum) + ' บาท';
-}
-
 // === Data ===
 async function loadData(){
   document.getElementById('todayThai').textContent = thaiDateString();
-  document.getElementById('asOfThai').textContent  = thaiDateString();
   try{
     const res = await fetch(SHEET_URL, { cache: 'no-store' });
     const data = await res.json();
     lastData = Array.isArray(data) ? data : [];
     lastTop10 = lastData.slice(0,10);
     renderTable(lastTop10);
-    populateHeaderSelectors();
-    updateKPI();
   }catch(e){
     console.error(e);
     renderTable([]);
@@ -125,7 +96,7 @@ async function loadData(){
   }
 }
 
-// === LIFF Share ===
+// === LIFF Share (login required) ===
 async function shareToLine(){
   if (!Array.isArray(lastData) || lastData.length===0){
     try{
@@ -187,6 +158,7 @@ function buildPDFReportNode(){
   const wrap = document.getElementById('pdfReport');
   wrap.innerHTML = '';
 
+  // Header with logo
   const hdr = document.createElement('div');
   hdr.className = 'hdr';
   const img = document.createElement('img');
@@ -200,16 +172,7 @@ function buildPDFReportNode(){
   hdr.appendChild(titleBlock);
   wrap.appendChild(hdr);
 
-  const amountHeader = getBalanceHeader();
-  let sum = 0;
-  if (amountHeader){
-    sum = lastTop10.reduce((acc, r)=> acc + (isNumeric(r[amountHeader])? toNumber(r[amountHeader]):0), 0);
-  }
-  const kpi = document.createElement('div');
-  kpi.className = 'kpi';
-  kpi.textContent = `ยอดรวมเงินคงเหลือ (Top 10): ${fmtNumber(sum)} บาท`;
-  wrap.appendChild(kpi);
-
+    // Table
   const table = document.createElement('table');
   const thead = document.createElement('thead');
   const trh = document.createElement('tr');
@@ -232,6 +195,7 @@ function buildPDFReportNode(){
   table.appendChild(tbody);
   wrap.appendChild(table);
 
+  // Signatures
   const signRow = document.createElement('div');
   signRow.className = 'sign-row';
   const s1 = document.createElement('div'); s1.className = 'sign'; s1.innerHTML = '<div class="line"></div><div class="name">ผู้บริหาร / ผู้อำนวยการ</div>';
@@ -285,12 +249,7 @@ async function exportPDF(){
 
 // === Events ===
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('todayThai').textContent = thaiDateString();
-  document.getElementById('asOfThai').textContent  = thaiDateString();
   loadData();
-
   document.getElementById('btnShare').addEventListener('click', shareToLine);
   document.getElementById('btnExportPDF').addEventListener('click', exportPDF);
-  document.getElementById('amountHeaderSelect').addEventListener('change', ()=>{ updateKPI(); });
-  document.getElementById('countHeaderSelect').addEventListener('change', ()=>{ /* no-op */ });
 });
