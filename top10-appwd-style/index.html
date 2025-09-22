@@ -62,7 +62,7 @@
     <section class="grid">
       <div class="card kpi">
         <div class="kpi-head">
-          <div class="kpi-title">ยอดรวมเงินฝากทั้งหมด (Top 10)</div>
+          <div class="kpi-title">ยอดรวมเงินคงเหลือ (Top 10)</div>
           <div class="kpi-sub">ข้อมูล ณ <span id="asOfThai"></span></div>
         </div>
         <div class="kpi-value" id="sumDeposit">—</div>
@@ -71,7 +71,7 @@
       <div class="card controls">
         <div class="ctrl-row">
           <div class="ctrl-group">
-            <label>คอลัมน์ยอดเงิน</label>
+            <label>คอลัมน์ยอดเงิน (สำรอง)</label>
             <select id="amountHeaderSelect"></select>
           </div>
           <div class="ctrl-group">
@@ -104,29 +104,6 @@
 
   <!-- Hidden report container for PDF render -->
   <div id="pdfReport" class="pdf-report" aria-hidden="true"></div>
-
-  <!-- Bottom Sheet Profile -->
-  <div id="profileSheet" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
-    <div class="sheet-content">
-      <div class="sheet-header">
-        <div class="sheet-title" id="sheetTitle">โปรไฟล์</div>
-        <button class="sheet-close" id="sheetClose" aria-label="ปิด"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="sheet-body">
-        <div class="pf-row">
-          <img id="pfAvatar" class="pf-avatar" src="./assets/avatar.svg" alt="avatar" />
-          <div class="pf-info">
-            <div class="pf-name" id="pfName">Guest</div>
-            <div class="pf-sub" id="pfSub">ยังไม่ได้เข้าสู่ระบบ LINE</div>
-          </div>
-        </div>
-        <div class="pf-actions">
-          <button id="btnLineLogin" class="btn btn-primary"><i class="fa-brands fa-line"></i> Login with LINE</button>
-          <button id="btnLineOpen" class="btn btn-soft">เปิดใน LINE</button>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- Toast -->
   <div id="toast" class="toast hidden" role="status"></div>

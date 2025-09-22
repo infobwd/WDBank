@@ -29,15 +29,17 @@ function toast(msg){
   setTimeout(()=>t.classList.add('hidden'), 2200);
 }
 
-function showLoginBadge(show){
-  const badge = document.getElementById('loginBadge');
-  if (show) badge.classList.add('show'); else badge.classList.remove('show');
-}
-
 // Heuristic: headers
 function isAccountHeader(h){ return /(เลข\s*บัญชี|บัญชี|account)/i.test(String(h)); }
 function isCountHeader(h){ return /(จำนวน|ครั้ง|count)/i.test(String(h)); }
-function isAmountHeader(h){ return /(ยอด|รวม|amount|total|เงิน)/i.test(String(h)); }
+function isAmountHeader(h){ return /(คงเหลือ|ยอดคงเหลือ|ยอด|รวม|amount|total|เงิน)/i.test(String(h)); }
+
+function getBalanceHeader(){
+  const h1 = tableHeaders.find(h => /(คงเหลือ|ยอดคงเหลือ)/i.test(String(h)));
+  if (h1) return h1;
+  const sel = document.getElementById('amountHeaderSelect');
+  return sel && sel.value ? sel.value : null;
+}
 
 // === Rendering ===
 function renderTable(data){
@@ -85,22 +87,23 @@ function populateHeaderSelectors(){
     amountSel.appendChild(opt1); countSel.appendChild(opt2);
   });
 
-  // Auto guess
-  let guessAmount = tableHeaders.find(isAmountHeader) || tableHeaders.find(h => h !== tableHeaders[0] && h !== tableHeaders[1]);
-  let guessCount  = tableHeaders.find(isCountHeader)  || tableHeaders.find(h => h !== guessAmount);
+  let guessAmount = tableHeaders.find(h => /(คงเหลือ|ยอดคงเหลือ)/i.test(String(h))) or \
+                    tableHeaders.find(h => /(ยอด|รวม|amount|total|เงิน)/i.test(String(h)));
+  let guessCount  = tableHeaders.find(isCountHeader);
 
   if (guessAmount) amountSel.value = guessAmount;
   if (guessCount)  countSel.value  = guessCount;
 }
 
 function updateKPI(){
-  const amountHeader = document.getElementById('amountHeaderSelect').value;
-  if (!amountHeader) { document.getElementById('sumDeposit').textContent = '—'; return; }
+  const amountHeader = getBalanceHeader();
+  const el = document.getElementById('sumDeposit');
+  if (!amountHeader) { el.textContent = '—'; return; }
   const sum = lastTop10.reduce((acc, r) => {
     const v = r[amountHeader];
     return acc + (isNumeric(v) ? toNumber(v) : 0);
   }, 0);
-  document.getElementById('sumDeposit').textContent = fmtNumber(sum) + ' บาท';
+  el.textContent = fmtNumber(sum) + ' บาท';
 }
 
 // === Data ===
@@ -122,76 +125,38 @@ async function loadData(){
   }
 }
 
-// === LIFF ===
-async function ensureLiffReady(){
-  if (liffReady) return true;
-  if (!liffInitOnce){
-    liffInitOnce = liff.init({ liffId: LIFF_ID })
-      .then(()=>{ liffReady = true; return true; })
-      .catch(e => { console.warn('LIFF init failed:', e); return false; });
+// === LIFF Share ===
+async function shareToLine(){
+  if (!Array.isArray(lastData) || lastData.length===0){
+    try{
+      const res = await fetch(SHEET_URL, { cache:'no-store' });
+      lastData = await res.json();
+      lastTop10 = lastData.slice(0,10);
+    }catch(e){ toast('ไม่มีข้อมูลที่จะแชร์'); return; }
   }
-  return liffInitOnce;
-}
-
-async function loadProfile(){
-  const avatar = document.getElementById('avatar');
-  const pfAvatar = document.getElementById('pfAvatar');
-  const pfName = document.getElementById('pfName');
-  const pfSub = document.getElementById('pfSub');
-
-  const ok = await ensureLiffReady();
-  if (!ok){
-    showLoginBadge(true);
-    return;
-  }
+  if (!Array.isArray(lastData) || lastData.length===0){ toast('ไม่มีข้อมูลที่จะแชร์'); return; }
 
   try{
-    if (!liff.isLoggedIn()) {
-      showLoginBadge(true);
-      pfName.textContent = 'Guest';
-      pfSub.textContent = 'ยังไม่ได้เข้าสู่ระบบ LINE';
-      return;
-    }
-    showLoginBadge(false);
+    await liff.init({ liffId: LIFF_ID });
+  }catch(e){ return toast('ไม่สามารถเริ่มระบบ LINE ได้'); }
 
-    const prof = await liff.getProfile();
-    if (prof?.pictureUrl){
-      avatar.src = prof.pictureUrl;
-      pfAvatar.src = prof.pictureUrl;
-    }
-    if (prof?.displayName){
-      pfName.textContent = prof.displayName;
-      pfSub.textContent = liff.isInClient()? 'เปิดผ่าน LINE': 'เปิดผ่านเว็บ';
-    }
-  }catch(e){
-    showLoginBadge(true);
+  if (!liff.isLoggedIn()){
+    await Swal.fire({ title:'ต้องเข้าสู่ระบบ LINE', text:'เพื่อแชร์ผ่าน LINE จำเป็นต้องเข้าสู่ระบบก่อน', icon:'info', confirmButtonText:'เข้าสู่ระบบ' });
+    return liff.login({ redirectUri: location.href });
   }
-}
 
-// === Share ===
-function buildFlexFromData(data){
-  const headers = Object.keys(data[0] || {});
-  const top10 = data.slice(0,10);
-  const headerBox = {
-    type:'box', layout:'horizontal',
-    contents: headers.map(h => ({ type:'text', text: cut(h,12), size:'xs', weight:'bold', flex:1, align:'center' }))
-  };
-  const dataRows = top10.map((row, idx) => ({
+  const headers = Object.keys(lastTop10[0] || {});
+  const headerBox = { type:'box', layout:'horizontal', contents: headers.map(h => ({ type:'text', text: cut(h,12), size:'xs', weight:'bold', flex:1, align:'center' })) };
+  const dataRows = lastTop10.map((row, idx) => ({
     type:'box', layout:'horizontal', backgroundColor: idx%2? '#FFFFFF':'#F5F6FA',
-    contents: headers.map(h => ({
-      type:'text',
-      text: cut(isAccountHeader(h) ? String(row[h] ?? '') : (isNumeric(row[h])? fmtNumber(row[h]): (row[h] ?? '')), 16),
-      size:'xs', flex:1, align:'center'
-    }))
+    contents: headers.map(h => ({ type:'text', text: cut(isAccountHeader(h) ? String(row[h] ?? '') : (isNumeric(row[h])? fmtNumber(row[h]): (row[h] ?? '')), 16), size:'xs', flex:1, align:'center' }))
   }));
-  return {
-    type:'flex',
-    altText:'WDBank — TOP 10 ฝากเงินเก่ง',
-    contents:{
-      type:'bubble', size:'giga',
-      hero:{ type:'image', url:'https://raw.githubusercontent.com/infobwd/wdconnect/main/top10.png',
-        size:'full', aspectRatio:'20:13', aspectMode:'cover',
-        action:{ type:'uri', uri:`https://liff.line.me/${LIFF_ID}` } },
+
+  const flex = {
+    type:'flex', altText:'WDBank — TOP 10 ฝากเงินเก่ง',
+    contents:{ type:'bubble', size:'giga',
+      hero:{ type:'image', url:'https://raw.githubusercontent.com/infobwd/wdconnect/main/top10.png', size:'full', aspectRatio:'20:13', aspectMode:'cover',
+             action:{ type:'uri', uri:`https://liff.line.me/${LIFF_ID}` } },
       body:{ type:'box', layout:'vertical', contents:[
         { type:'text', text:'WDBank • TOP 10 ฝากเงินเก่ง', weight:'bold', size:'lg' },
         { type:'text', text:`ออมก่อนใช้ • ${thaiDateString()}`, color:'#7286D3', size:'sm' },
@@ -205,31 +170,7 @@ function buildFlexFromData(data){
       ]}
     }
   };
-}
 
-async function shareToLine(){
-  if (!Array.isArray(lastData) || lastData.length===0){
-    try{
-      const res = await fetch(SHEET_URL, { cache:'no-store' });
-      lastData = await res.json();
-      lastTop10 = lastData.slice(0,10);
-    }catch(e){ toast('ไม่มีข้อมูลที่จะแชร์'); return; }
-  }
-  if (!Array.isArray(lastData) || lastData.length===0){ toast('ไม่มีข้อมูลที่จะแชร์'); return; }
-
-  await ensureLiffReady();
-  const loggedIn = liff.isLoggedIn?.() === true;
-  if (!loggedIn){
-    await Swal.fire({
-      title: 'ต้องเข้าสู่ระบบ LINE',
-      text: 'เพื่อแชร์ผ่าน LINE จำเป็นต้องเข้าสู่ระบบก่อน',
-      icon: 'info',
-      confirmButtonText: 'เข้าสู่ระบบ'
-    });
-    return liff.login({ redirectUri: location.href });
-  }
-
-  const flex = buildFlexFromData(lastTop10);
   try{
     const result = await liff.shareTargetPicker([flex]);
     if (result) toast('แชร์ไปยัง LINE แล้ว');
@@ -246,27 +187,29 @@ function buildPDFReportNode(){
   const wrap = document.getElementById('pdfReport');
   wrap.innerHTML = '';
 
-  const h1 = document.createElement('h1');
-  h1.textContent = 'WDBank — รายงาน TOP 10 บัญชีฝากเงิน';
-  wrap.appendChild(h1);
+  const hdr = document.createElement('div');
+  hdr.className = 'hdr';
+  const img = document.createElement('img');
+  img.src = './assets/logo.svg';
+  img.alt = 'ตราโรงเรียน';
+  hdr.appendChild(img);
+  const titleBlock = document.createElement('div');
+  const h1 = document.createElement('h1'); h1.textContent = 'รายงาน TOP 10 บัญชีฝากเงิน';
+  const meta = document.createElement('div'); meta.className = 'meta'; meta.textContent = `WDBank • ออมก่อนใช้ • วันที่ ${thaiDateString()}`;
+  titleBlock.appendChild(h1); titleBlock.appendChild(meta);
+  hdr.appendChild(titleBlock);
+  wrap.appendChild(hdr);
 
-  const meta = document.createElement('div');
-  meta.className = 'meta';
-  meta.textContent = `ออมก่อนใช้ • วันที่ ${thaiDateString()}`;
-  wrap.appendChild(meta);
-
-  // KPI
-  const amountHeader = document.getElementById('amountHeaderSelect').value;
+  const amountHeader = getBalanceHeader();
   let sum = 0;
   if (amountHeader){
     sum = lastTop10.reduce((acc, r)=> acc + (isNumeric(r[amountHeader])? toNumber(r[amountHeader]):0), 0);
   }
   const kpi = document.createElement('div');
   kpi.className = 'kpi';
-  kpi.textContent = `ยอดรวมเงินฝากทั้งหมด (Top 10): ${fmtNumber(sum)} บาท`;
+  kpi.textContent = `ยอดรวมเงินคงเหลือ (Top 10): ${fmtNumber(sum)} บาท`;
   wrap.appendChild(kpi);
 
-  // Table
   const table = document.createElement('table');
   const thead = document.createElement('thead');
   const trh = document.createElement('tr');
@@ -288,6 +231,13 @@ function buildPDFReportNode(){
   });
   table.appendChild(tbody);
   wrap.appendChild(table);
+
+  const signRow = document.createElement('div');
+  signRow.className = 'sign-row';
+  const s1 = document.createElement('div'); s1.className = 'sign'; s1.innerHTML = '<div class="line"></div><div class="name">ผู้บริหาร / ผู้อำนวยการ</div>';
+  const s2 = document.createElement('div'); s2.className = 'sign'; s2.innerHTML = '<div class="line"></div><div class="name">ผู้จัดทำรายงาน</div>';
+  signRow.appendChild(s1); signRow.appendChild(s2);
+  wrap.appendChild(signRow);
 
   return wrap;
 }
@@ -333,16 +283,11 @@ async function exportPDF(){
   pdf.save(`WDBank-รายงานTOP10-${new Date().toISOString().slice(0,10)}.pdf`);
 }
 
-// === Bottom Sheet ===
-function openSheet(){ document.getElementById('profileSheet').classList.remove('hidden'); }
-function closeSheet(){ document.getElementById('profileSheet').classList.add('hidden'); }
-
 // === Events ===
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('todayThai').textContent = thaiDateString();
   document.getElementById('asOfThai').textContent  = thaiDateString();
   loadData();
-  loadProfile();
 
   document.getElementById('btnShare').addEventListener('click', shareToLine);
   document.getElementById('btnExportPDF').addEventListener('click', exportPDF);

@@ -90,26 +90,18 @@ select{padding:.5rem .6rem; border-radius:10px; border:1px solid #e5e7eb; outlin
 
 /* Hidden PDF report */
 .pdf-report{position:absolute; left:-99999px; top:-99999px; width:794px; padding:24px; font-family:Kanit, sans-serif; color:#111; background:#fff}
-.pdf-report h1{margin:0 0 4px 0; font-size:20px}
+.pdf-report .hdr{display:flex; align-items:center; gap:12px; margin-bottom:6px}
+.pdf-report .hdr img{width:44px; height:44px; object-fit:contain}
+.pdf-report h1{margin:0; font-size:20px}
 .pdf-report .meta{color:#475569; margin-bottom:6px}
 .pdf-report .kpi{margin:6px 0 10px 0; font-weight:700}
 .pdf-report table{width:100%; border-collapse:collapse; font-size:12px}
 .pdf-report th, .pdf-report td{border:1px solid #e5e7eb; padding:6px 8px; text-align:center}
 .pdf-report thead th{background:#eff6ff}
-
-/* Bottom sheet */
-.sheet{position:fixed; inset:0; display:flex; align-items:flex-end; justify-content:center; background:rgba(0,0,0,.25)}
-.sheet.hidden{display:none}
-.sheet-content{background:#fff; width:100%; max-width:520px; border-radius:14px 14px 0 0; box-shadow:var(--shadow); padding:.8rem .9rem}
-.sheet-header{display:flex; align-items:center; justify-content:space-between}
-.sheet-title{font-weight:700}
-.sheet-close{border:none; background:transparent; font-size:1.2rem}
-.pf-row{display:flex; gap:.8rem; align-items:center; margin-top:.6rem}
-.pf-avatar{width:54px; height:54px; border-radius:999px; object-fit:cover; box-shadow:0 4px 10px rgba(0,0,0,.12)}
-.pf-info{display:flex; flex-direction:column}
-.pf-name{font-weight:700}
-.pf-sub{font-size:.85rem; color:var(--muted)}
-.pf-actions{display:flex; gap:.6rem; margin-top:.8rem}
+.pdf-report .sign-row{display:flex; gap:24px; margin-top:18px}
+.pdf-report .sign{flex:1; text-align:center; padding-top:30px}
+.pdf-report .sign .line{border-top:1px dashed #64748b; margin:8px 0}
+.pdf-report .sign .name{color:#334155}
 
 /* Toast */
 .toast{position:fixed; left:50%; transform:translateX(-50%); bottom:82px; background:#101329; color:#e2e8f0; padding:.65rem .9rem; border-radius:12px; box-shadow:0 10px 20px rgba(0,0,0,.15); font-weight:600}
