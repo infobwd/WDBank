@@ -19,6 +19,10 @@
   <!-- LINE LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script>
 
+  <!-- jsPDF + html2canvas for Thai PDF -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
@@ -44,7 +48,7 @@
       <div class="section-head">
         <div>
           <div class="title">3 บัญชีเด่น (เข้าเงื่อนไขครบทั้ง 3)</div>
-          <div class="subtitle" id="todayThai"></div>
+          <div class="subtitle">วันที่ <span id="todayThai"></span></div>
         </div>
         <div class="actions">
           <button id="share-allstars" class="btn btn-line"><i class="fa-brands fa-line"></i> แชร์การ์ดนี้</button>
@@ -66,8 +70,12 @@
     <div id="panel-amount" class="panel show">
       <div class="card">
         <div class="section-head">
-          <div class="title">TOP 10 ยอดเงินสูงสุด (และฝาก ≥ ค่าเฉลี่ย)</div>
+          <div>
+            <div class="title">TOP 10 ยอดเงินสูงสุด (และฝาก ≥ ค่าเฉลี่ย)</div>
+            <div class="desc">บัญชีที่มีเงินคงเหลือสูงและจำนวนครั้งฝากไม่น้อยกว่าค่าเฉลี่ยของทั้งโรงเรียน</div>
+          </div>
           <div class="actions">
+            <button id="pdf-amount" class="btn btn-primary"><i class="fa-solid fa-file-pdf"></i> ออกรายงาน PDF</button>
             <button id="share-amount" class="btn btn-line"><i class="fa-brands fa-line"></i> แชร์แท็บนี้</button>
           </div>
         </div>
@@ -80,8 +88,12 @@
     <div id="panel-frequent" class="panel">
       <div class="card">
         <div class="section-head">
-          <div class="title">TOP 10 บัญชีฝากถี่มาก</div>
+          <div>
+            <div class="title">TOP 10 บัญชีฝากถี่มาก</div>
+            <div class="desc">โฟกัสเฉพาะ “ความถี่ในการฝาก” โดยไม่ดูยอดเงินคงเหลือ</div>
+          </div>
           <div class="actions">
+            <button id="pdf-frequent" class="btn btn-primary"><i class="fa-solid fa-file-pdf"></i> ออกรายงาน PDF</button>
             <button id="share-frequent" class="btn btn-line"><i class="fa-brands fa-line"></i> แชร์แท็บนี้</button>
           </div>
         </div>
@@ -94,8 +106,12 @@
     <div id="panel-depositonly" class="panel">
       <div class="card">
         <div class="section-head">
-          <div class="title">TOP 10 ไม่เคยถอน และฝาก ≥ ค่าเฉลี่ย</div>
+          <div>
+            <div class="title">TOP 10 ไม่เคยถอน และฝาก ≥ ค่าเฉลี่ย</div>
+            <div class="desc">เหมาะยกย่องการออมระยะยาว ไม่พบรายการถอน และฝากบ่อยไม่น้อยกว่าค่าเฉลี่ย</div>
+          </div>
           <div class="actions">
+            <button id="pdf-depositonly" class="btn btn-primary"><i class="fa-solid fa-file-pdf"></i> ออกรายงาน PDF</button>
             <button id="share-depositonly" class="btn btn-line"><i class="fa-brands fa-line"></i> แชร์แท็บนี้</button>
           </div>
         </div>
@@ -105,6 +121,9 @@
       </div>
     </div>
   </section>
+
+  <!-- Hidden report container -->
+  <div id="pdfReport" class="pdf-report" aria-hidden="true"></div>
 
   <footer class="footer">© 2024 WDBank • ออมก่อนใช้</footer>
 

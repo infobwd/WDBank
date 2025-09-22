@@ -18,6 +18,7 @@ body{
   background:linear-gradient(180deg,var(--brandSoft) 0%, #fff 55%);
   color:var(--text);
 }
+button, input, select, textarea{font-family:inherit}
 
 /* App bar */
 .appbar{
@@ -25,6 +26,7 @@ body{
   display:flex; align-items:center;
   padding:.6rem .9rem; background:#fff;
   box-shadow:var(--shadow);
+  font-family:inherit;
 }
 .brand{display:flex; align-items:center; gap:.6rem}
 .brand-mark{width:28px; height:28px; border-radius:8px; background:var(--brand); box-shadow:0 6px 14px rgba(37,99,235,.25)}
@@ -42,12 +44,13 @@ body{
 .card{background:var(--card); border-radius:16px; box-shadow:var(--shadow); padding:1rem; margin:1rem 0}
 
 /* Section head */
-.section-head{display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:.6rem}
+.section-head{display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:.6rem; font-family:inherit}
 .title{font-size:1.05rem; font-weight:800; color:var(--ink)}
 .subtitle{font-size:.9rem; color:var(--muted)}
+.desc{font-size:.9rem; color:#475569; margin-top:.2rem}
 
 /* Allstars */
-.allstars{display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:.8rem}
+.allstars{display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:.8rem; font-family:inherit}
 .star-card{border:1px solid #e5e7eb; border-radius:14px; padding:.8rem; background:linear-gradient(180deg,#ffffff,#f7fbff)}
 .star-hdr{display:flex; align-items:center; gap:.6rem; margin-bottom:.4rem}
 .star-acc{font-family:ui-monospace,Menlo,Consolas,monospace; font-weight:800}
@@ -58,22 +61,39 @@ body{
 .badge.purple{background:#f5f3ff; color:#7c3aed}
 
 /* Tabs */
-.tabs{display:flex; gap:.5rem; margin-top:.4rem}
-.tab{padding:.5rem .8rem; border:none; border-radius:10px; background:#eaf2ff; font-weight:700; cursor:pointer}
+.tabs{display:flex; gap:.5rem; margin-top:.4rem; font-family:inherit}
+.tab{padding:.5rem .8rem; border:none; border-radius:10px; background:#eaf2ff; font-weight:700; cursor:pointer; font-family:inherit}
 .tab.active{background:#2563EB; color:#fff}
 .panel{display:none}
 .panel.show{display:block}
 
 /* Table */
-.table-wrap{overflow:auto; margin:.6rem 0}
+.table-wrap{overflow:auto; margin:.6rem 0; font-family:inherit}
 .table{width:100%; border-collapse:separate; border-spacing:0; font-size:.95rem}
 .table thead th{position:sticky; top:0; background:#fff; color:var(--ink); text-align:center; padding:.6rem .5rem; border-bottom:1px solid #e5e7eb}
 .table tbody td{padding:.55rem .5rem; border-bottom:1px solid #f1f5f9; white-space:nowrap; text-align:center}
 .table tbody tr:nth-child(odd){background:#f9fbff}
 
+/* Account badge style (masked) */
+.acc-pill{
+  display:inline-block; padding:.25rem .6rem; border-radius:999px;
+  background:#0ea5e926; color:#0f172a; font-weight:800;
+  font-family:ui-monospace,Menlo,Consolas,monospace; letter-spacing:.5px;
+}
+
 /* Buttons */
-.btn{display:inline-flex; align-items:center; gap:.45rem; border:none; border-radius:10px; padding:.65rem .9rem; font-weight:700; cursor:pointer}
+.btn{display:inline-flex; align-items:center; gap:.45rem; border:none; border-radius:10px; padding:.65rem .9rem; font-weight:700; cursor:pointer; font-family:inherit}
 .btn-line{background:var(--line); color:#fff; box-shadow:0 10px 20px rgba(6,199,85,.25)}
+.btn-primary{background:var(--brand); color:#fff}
+
+/* PDF report */
+.pdf-report{position:absolute; left:-99999px; top:-99999px; width:794px; padding:24px; font-family:Kanit, sans-serif; color:#111; background:#fff}
+.pdf-report h1{margin:0 0 6px 0; font-size:20px}
+.pdf-report .meta{color:#64748b; margin-bottom:8px}
+.pdf-report table{width:100%; border-collapse:collapse; font-size:12px}
+.pdf-report th, .pdf-report td{border:1px solid #e5e7eb; padding:6px 8px; text-align:center}
+.pdf-report thead th{background:#eff6ff}
+.pdf-report .insight{margin-top:10px; padding:10px; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:8px; font-size:12px}
 
 /* Footer */
 .footer{padding:1rem; text-align:center; color:#64748b; font-size:.9rem;}
