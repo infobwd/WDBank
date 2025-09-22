@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="th" data-theme="light">
+<html lang="th">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>WDBank — TOP 10 บัญชีฝากเงิน</title>
+  <title>WDBank — รายงานรวม (3 เงื่อนไข)</title>
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
@@ -18,10 +18,6 @@
 
   <!-- LINE LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script>
-
-  <!-- jsPDF + html2canvas for Thai PDF -->
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
   <link rel="stylesheet" href="./styles.css" />
 </head>
@@ -42,44 +38,73 @@
     </button>
   </header>
 
-  <!-- Banking-like Header -->
-  <section class="bank-hero">
-    <div class="bank-hero-bg"></div>
-    <div class="bank-hero-content">
-      <div class="bank-row">
-        <div class="bank-title">บัญชีอันดับสูงสุด</div>
-        <div class="bank-date" id="todayThai"></div>
+  <!-- Summary All-stars -->
+  <section class="container">
+    <div class="card">
+      <div class="section-head">
+        <div>
+          <div class="title">3 บัญชีเด่น (เข้าเงื่อนไขครบทั้ง 3)</div>
+          <div class="subtitle" id="todayThai"></div>
+        </div>
+        <div class="actions">
+          <button id="share-allstars" class="btn btn-line"><i class="fa-brands fa-line"></i> แชร์การ์ดนี้</button>
+        </div>
       </div>
-      <div class="bank-chips">
-        <span class="chip primary"><i class="fa-solid fa-ranking-star"></i> TOP 10</span>
-        <span class="chip soft"><i class="fa-solid fa-piggy-bank"></i> ฝาก ≥ ค่าเฉลี่ย</span>
-      </div>
-      <div id="explain" class="bank-explain"></div>
+      <div id="allstars" class="allstars"></div>
     </div>
   </section>
 
-  <main class="container">
-    <!-- Data Table + Actions -->
-    <section class="card">
-      <div class="table-wrap">
-        <table class="table bank-table" id="dataTable" aria-label="Top 10 Table">
-          <thead><tr id="table-head"></tr></thead>
-          <tbody id="table-body"></tbody>
-        </table>
+  <!-- Tabs -->
+  <section class="container">
+    <div class="tabs">
+      <button class="tab active" data-tab="amount">ยอดเงินสูง • ฝาก ≥ ค่าเฉลี่ย</button>
+      <button class="tab" data-tab="frequent">ฝากถี่มาก</button>
+      <button class="tab" data-tab="depositonly">ไม่เคยถอน • ฝาก ≥ ค่าเฉลี่ย</button>
+    </div>
+
+    <!-- Panels -->
+    <div id="panel-amount" class="panel show">
+      <div class="card">
+        <div class="section-head">
+          <div class="title">TOP 10 ยอดเงินสูงสุด (และฝาก ≥ ค่าเฉลี่ย)</div>
+          <div class="actions">
+            <button id="share-amount" class="btn btn-line"><i class="fa-brands fa-line"></i> แชร์แท็บนี้</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="table" id="table-amount"><thead><tr id="th-amount"></tr></thead><tbody id="tb-amount"></tbody></table>
+        </div>
       </div>
+    </div>
 
-      <div class="actions">
-        <button id="btnShare" class="btn btn-line"><i class="fa-brands fa-line"></i> แชร์ไปยัง LINE</button>
-        <button id="btnExportPDF" class="btn btn-primary"><i class="fa-solid fa-file-pdf"></i> ออกรายงาน PDF</button>
+    <div id="panel-frequent" class="panel">
+      <div class="card">
+        <div class="section-head">
+          <div class="title">TOP 10 บัญชีฝากถี่มาก</div>
+          <div class="actions">
+            <button id="share-frequent" class="btn btn-line"><i class="fa-brands fa-line"></i> แชร์แท็บนี้</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="table" id="table-frequent"><thead><tr id="th-frequent"></tr></thead><tbody id="tb-frequent"></tbody></table>
+        </div>
       </div>
-    </section>
-  </main>
+    </div>
 
-  <!-- Hidden report container for PDF render -->
-  <div id="pdfReport" class="pdf-report" aria-hidden="true"></div>
-
-  <!-- Toast -->
-  <div id="toast" class="toast hidden" role="status"></div>
+    <div id="panel-depositonly" class="panel">
+      <div class="card">
+        <div class="section-head">
+          <div class="title">TOP 10 ไม่เคยถอน และฝาก ≥ ค่าเฉลี่ย</div>
+          <div class="actions">
+            <button id="share-depositonly" class="btn btn-line"><i class="fa-brands fa-line"></i> แชร์แท็บนี้</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="table" id="table-depositonly"><thead><tr id="th-depositonly"></tr></thead><tbody id="tb-depositonly"></tbody></table>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <footer class="footer">© 2024 WDBank • ออมก่อนใช้</footer>
 
