@@ -210,4 +210,4 @@ async function exportLeaderboardPDF(scope){ var titleMap={week:'ลีดเด�
 
 document.addEventListener('DOMContentLoaded', function(){ loadAll().then(()=>{ setupLeaderboard(); setupCharts(); setupLeaderboardPDFButtons(); }); loadProfileAvatar(); setupTabs(); setupBottomNav(); setupReportHub(); setupShareQuick(); });
 
-console.log('WDBank v6.4.2 loaded');
+// console.log('WDBank v6.4.2 loaded');
