@@ -23,10 +23,12 @@
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
-  <!-- App Bar -->
   <header class="appbar">
     <div class="brand">
       <img src="./assets/crest.svg" class="crest" alt="ตราโรงเรียน" />
@@ -42,7 +44,6 @@
     </button>
   </header>
 
-  <!-- Summary All-stars -->
   <main class="container pb-safe">
     <section class="card">
       <div class="section-head">
@@ -61,7 +62,6 @@
       </div>
     </section>
 
-    <!-- Weekly KPI cards -->
     <section class="card">
       <div class="section-head">
         <div class="title">สรุปสัปดาห์นี้</div>
@@ -96,7 +96,6 @@
       </div>
     </section>
 
-    <!-- Tabs -->
     <section class="">
       <div class="tabs scroll-x">
         <button class="tab active" data-tab="amount"><i class="fa-solid fa-trophy"></i> ยอดเงินสูง • ฝาก ≥ ค่าเฉลี่ย</button>
@@ -105,7 +104,6 @@
         <button class="tab" data-tab="latest"><i class="fa-solid fa-list-ol"></i> 10 รายการล่าสุด</button>
       </div>
 
-      <!-- Panels -->
       <div id="panel-amount" class="panel show">
         <section class="card">
           <div class="section-head stack-sm">
@@ -193,38 +191,9 @@
     </section>
   </main>
 
-  <!-- Reports Hub Modal -->
-  <div id="reportsModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="reportsTitle">
-    <div class="modal-card">
-      <div class="modal-head">
-        <div id="reportsTitle" class="title"><i class="fa-solid fa-file-waveform"></i> ศูนย์รายงาน</div>
-        <button class="btn btn-ghost" id="closeReports"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="modal-grid">
-        <button class="btn btn-primary" id="m-pdf-amount"><i class="fa-solid fa-trophy"></i> TOP 10 ยอดสูง</button>
-        <button class="btn btn-primary" id="m-pdf-frequent"><i class="fa-solid fa-clock-rotate-left"></i> TOP 10 ฝากถี่</button>
-        <button class="btn btn-primary" id="m-pdf-deposit"><i class="fa-solid fa-ban"></i> TOP 10 ไม่เคยถอน</button>
-        <button class="btn btn-primary" id="m-pdf-week"><i class="fa-solid fa-calendar-week"></i> สรุปสัปดาห์นี้</button>
-        <button class="btn btn-primary" id="m-pdf-month"><i class="fa-solid fa-calendar-days"></i> สรุปเดือนนี้</button>
-        <button class="btn btn-primary" id="m-pdf-class"><i class="fa-solid fa-layer-group"></i> คงเหลือรายชั้น</button>
-        <button class="btn btn-primary" id="m-pdf-savings"><i class="fa-solid fa-piggy-bank"></i> บัญชีออมสิน (TRUE)</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Bottom Navbar -->
-  <nav class="navbar">
-    <button class="nav-btn" data-tab="amount"><i class="fa-solid fa-baht-sign"></i><span>ยอดสูง</span></button>
-    <button class="nav-btn" data-tab="frequent"><i class="fa-solid fa-arrows-rotate"></i><span>ฝากถี่</span></button>
-    <button class="nav-btn" data-tab="latest"><i class="fa-solid fa-list"></i><span>ล่าสุด</span></button>
-    <button class="nav-btn" id="openReports"><i class="fa-solid fa-file-invoice"></i><span>รายงาน</span></button>
-    <button class="nav-btn" id="navProfile"><i class="fa-solid fa-user"></i><span>โปรไฟล์</span></button>
-  </nav>
-
-  <!-- Hidden report container -->
   <div id="pdfReport" class="pdf-report" aria-hidden="true"></div>
 
-
+  <footer class="footer">© 2024 WDBank • ออมก่อนใช้</footer>
 
   <script src="./app.js"></script>
 </body>
