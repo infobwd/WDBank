@@ -11,40 +11,49 @@ const SHEET_ACCOUNTS    = 'https://opensheet.elk.sh/1EZtfvb0h9wYZbRFTGcm0KVPScny
 let D_AMOUNT=[], D_FREQ=[], D_DEP=[], TX=[], AC=[];
 let TOP_AMOUNT=[], TOP_FREQ=[], TOP_DEP=[];
 
-const isNumeric=(val)=>{ if(val===null||val===undefined) return false; const n=Number(String(val).replace(/[, ]/g,'')); return Number.isFinite(n); };
-const toNumber=(val)=> Number(String(val).replace(/[, ]/g,''));
-const fmtNumber=(val)=>{ const n=Number(String(val).replace(/[, ]/g,'')); return Number.isFinite(n)? n.toLocaleString('th-TH', { maximumFractionDigits:2 }) : String(val??''); };
-const cut=(s,len)=> String(s??'').length>len? String(s).slice(0,len-1)+'…' : String(s??'');
-const thaiDateString=(d=new Date())=> d.toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
-function isAccountHeader(h){ return /(เลข\\s*บัญชี|บัญชี|account|รหัสนักเรียน)/i.test(String(h)); }
+function isNumeric(val){
+  if(val===null || val===undefined) return false;
+  var n = Number(String(val).replace(/[, ]/g,''));
+  return isFinite(n);
+}
+function toNumber(val){ return Number(String(val).replace(/[, ]/g,'')); }
+function fmtNumber(val){
+  var n = Number(String(val).replace(/[, ]/g,''));
+  return isFinite(n) ? n.toLocaleString('th-TH', { maximumFractionDigits:2 }) : String(val==null?'':val);
+}
+function cut(s,len){
+  s = String(s==null?'':s);
+  return s.length>len ? s.slice(0,len-1)+'…' : s;
+}
+function thaiDateString(d){
+  if(!d) d=new Date();
+  return d.toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+}
+function isAccountHeader(h){ return /(เลข\s*บัญชี|บัญชี|account|รหัสนักเรียน)/i.test(String(h)); }
 function isCountHeader(h){ return /(จำนวน|ครั้ง|count)/i.test(String(h)); }
 function isBalanceHeader(h){ return /(คงเหลือ|ยอดคงเหลือ|ยอด|รวม|amount|total|เงิน)/i.test(String(h)); }
 function isClassHeader(h){ return /(ชั้น|ห้อง|class)/i.test(String(h)); }
 function formatAccountMasked(val){
-  const raw=String(val??'').replace(/\\s+/g,'').replace(/,/g,'');
+  var raw=String(val==null?'':val).replace(/\s+/g,'').replace(/,/g,'');
   if(!raw) return '-';
-  const first=raw.slice(0,4);
-  const last2=raw.slice(-2);
-  return `${first} •••• ••${last2}`.trim();
+  var first=raw.slice(0,4);
+  var last2=raw.slice(-2);
+  return (first+' •••• ••'+last2).trim();
 }
-function headersOf(rows){ return Object.keys(rows?.[0]||{}); }
-
-// Remove skeleton helper
-function clearSkeleton(el){
-  if(!el) return;
-  el.classList.remove('sk','sk-text','sk-title');
-}
+function headersOf(rows){ return Object.keys(rows && rows[0] ? rows[0] : {}); }
+function clearSkeleton(el){ if(!el) return; el.classList.remove('sk','sk-text','sk-title'); }
 
 // =================== Data ===================
-async function fetchJSON(url,{timeout=12000,retries=2}={}){
-  const attempt=async()=>{
-    const ctrl=new AbortController(); const t=setTimeout(()=>ctrl.abort(), timeout);
+async function fetchJSON(url,opt){
+  opt = opt || {}; var timeout = opt.timeout || 12000; var retries = opt.retries==null?2:opt.retries;
+  async function attempt(){
+    const ctrl=new AbortController(); const t=setTimeout(function(){ctrl.abort()}, timeout);
     try{
-      const res=await fetch(url+(url.includes('?')?'&':'?')+'_ts='+Date.now(),{signal:ctrl.signal,cache:'no-store'});
+      const res=await fetch(url+(url.indexOf('?')>-1?'&':'?')+'_ts='+Date.now(),{signal:ctrl.signal,cache:'no-store'});
       clearTimeout(t); if(!res.ok) throw new Error('HTTP '+res.status);
       return await res.json();
     }catch(e){ clearTimeout(t); throw e; }
-  };
+  }
   for(let i=0;i<=retries;i++){
     try{ return await attempt(); }
     catch(err){ if(i===retries) throw err; await new Promise(r=>setTimeout(r, 600*(i+1))); }
@@ -52,11 +61,14 @@ async function fetchJSON(url,{timeout=12000,retries=2}={}){
 }
 function parseThaiDate(s){
   try{
-    const [datePart,timePart='00:00:00']=String(s).split(',').map(t=>t.trim());
-    const [d,m,y]=datePart.split('/').map(x=>parseInt(x,10));
-    const [hh,mm,ss]=timePart.split(':').map(x=>parseInt(x,10));
-    const gy=(y>2400)? y-543:y;
-    return new Date(gy,m-1,d,hh||0,mm||0,ss||0);
+    s = String(s);
+    const parts = s.split(',');
+    const datePart = parts[0].trim();
+    const timePart = (parts[1]||'00:00:00').trim();
+    const dmy = datePart.split('/').map(x=>parseInt(x,10));
+    const tms = timePart.split(':').map(x=>parseInt(x,10));
+    const gy = (dmy[2]>2400)? dmy[2]-543 : dmy[2];
+    return new Date(gy, dmy[1]-1, dmy[0], tms[0]||0, tms[1]||0, tms[2]||0);
   }catch(e){return null;}
 }
 function isThisWeek(date){
@@ -72,10 +84,11 @@ async function loadAll(){
   todayEl.textContent=thaiDateString(); clearSkeleton(todayEl);
 
   try{
-    const [A,B,C,T,X] = await Promise.allSettled([
+    const settled = await Promise.allSettled([
       fetchJSON(SHEET_AMOUNT), fetchJSON(SHEET_FREQUENT), fetchJSON(SHEET_DEPOSITONLY),
       fetchJSON(SHEET_TX), fetchJSON(SHEET_ACCOUNTS)
     ]);
+    const A=settled[0],B=settled[1],C=settled[2],T=settled[3],X=settled[4];
     if(A.status==='fulfilled') D_AMOUNT=A.value; if(B.status==='fulfilled') D_FREQ=B.value; if(C.status==='fulfilled') D_DEP=C.value;
     if(T.status==='fulfilled') TX=T.value; if(X.status==='fulfilled') AC=X.value;
   }catch(e){
@@ -94,17 +107,17 @@ function renderTable(headId, bodyId, rows){
   const headEl=document.getElementById(headId);
   const bodyEl=document.getElementById(bodyId);
   headEl.innerHTML=''; bodyEl.innerHTML='';
-  if(!rows?.length){ headEl.innerHTML='<th>ข้อมูล</th>'; bodyEl.innerHTML='<tr><td>ไม่พบข้อมูล</td></tr>'; return; }
+  if(!(rows && rows.length)){ headEl.innerHTML='<th>ข้อมูล</th>'; bodyEl.innerHTML='<tr><td>ไม่พบข้อมูล</td></tr>'; return; }
   const headers = headersOf(rows);
-  headers.forEach(h=>{ const th=document.createElement('th'); th.textContent=h; headEl.appendChild(th); });
-  rows.forEach(r=>{
+  headers.forEach(function(h){ const th=document.createElement('th'); th.textContent=h; headEl.appendChild(th); });
+  rows.forEach(function(r){
     const tr=document.createElement('tr');
-    headers.forEach(h=>{
+    headers.forEach(function(h){
       const td=document.createElement('td');
       const raw=r[h];
       if(isAccountHeader(h)){ const span=document.createElement('span'); span.className='acc-pill'; span.textContent=formatAccountMasked(raw); td.appendChild(span); }
       else if(isNumeric(raw)){ td.textContent=fmtNumber(raw); }
-      else { td.textContent=String(raw??''); }
+      else { td.textContent=String(raw==null?'':raw); }
       tr.appendChild(td);
     });
     bodyEl.appendChild(tr);
@@ -113,12 +126,13 @@ function renderTable(headId, bodyId, rows){
 
 function getAccountKey(headers, row){
   const accHeader=headers.find(isAccountHeader);
-  return String(accHeader? row[accHeader] : Object.values(row)[0]??'').trim();
+  const k = accHeader? row[accHeader] : Object.values(row)[0];
+  return String(k==null?'':k).trim();
 }
 
 function renderAllStars(){
   const wrap=document.getElementById('allstars'); wrap.innerHTML='';
-  if(!TOP_AMOUNT.length || !TOP_FREQ.length || !TOP_DEP.length){
+  if(!(TOP_AMOUNT.length && TOP_FREQ.length && TOP_DEP.length)){
     wrap.innerHTML='<div class="subtitle">ยังไม่พอสร้างการ์ดสรุป</div>'; return;
   }
   const A=new Map(TOP_AMOUNT.map(r=>[getAccountKey(headersOf(TOP_AMOUNT),r),r]));
@@ -131,42 +145,47 @@ function renderAllStars(){
   const countH=headersOf(TOP_AMOUNT).find(isCountHeader)||headersOf(TOP_FREQ).find(isCountHeader)||headersOf(TOP_DEP).find(isCountHeader);
   const classH=headersOf(TOP_AMOUNT).find(isClassHeader)||headersOf(TOP_FREQ).find(isClassHeader)||headersOf(TOP_DEP).find(isClassHeader);
 
-  intersection.forEach(key=>{
+  intersection.forEach(function(key){
     const rA=A.get(key)||{}, rB=B.get(key)||{}, rC=C.get(key)||{};
     const cls=(classH&&(rA[classH]||rB[classH]||rC[classH]))? String(rA[classH]||rB[classH]||rC[classH]):'ไม่ระบุ';
-    const amountTxt=balanceH?(isNumeric(rA[balanceH]||rB[balanceH]||rC[balanceH])? fmtNumber(rA[balanceH]||rB[balanceH]||rC[balanceH]) : '-'):'-';
-    const countTxt=countH?(isNumeric(rA[countH]||rB[countH]||rC[countH])? fmtNumber(rA[countH]||rB[countH]||rC[countH]) : '-'):'-';
+    const amtSrc = (rA[balanceH]||rB[balanceH]||rC[balanceH]);
+    const cntSrc = (rA[countH]||rB[countH]||rC[countH]);
+    const amountTxt=balanceH?(isNumeric(amtSrc)? fmtNumber(amtSrc) : '-'):'-';
+    const countTxt=countH?(isNumeric(cntSrc)? fmtNumber(cntSrc) : '-'):'-';
 
     const card=document.createElement('div'); card.className='star-card';
-    card.innerHTML=`
-      <div class="star-hdr">
-        <i class="fa-solid fa-trophy" style="color:#eab308"></i>
-        <div>
-          <div class="star-acc">${formatAccountMasked(key)}</div>
-          <div class="star-badges">
-            <span class="badge blue"><i class="fa-solid fa-baht-sign"></i> ยอดเงินสูง</span>
-            <span class="badge green"><i class="fa-solid fa-clock-rotate-left"></i> ฝากถี่</span>
-            <span class="badge purple"><i class="fa-solid fa-ban"></i> ไม่เคยถอน</span>
-          </div>
-        </div>
-      </div>
-      <div class="subtitle">ยอดคงเหลือโดยประมาณ: <strong>${amountTxt}</strong> บาท • จำนวนครั้งฝาก: <strong>${countTxt}</strong></div>
-      <div class="class-tag"><i class="fa-solid fa-school"></i> ${cls}</div>
-    `;
+    card.innerHTML=[
+      '<div class="star-hdr">',
+        '<i class="fa-solid fa-trophy" style="color:#eab308"></i>',
+        '<div>',
+          '<div class="star-acc">'+formatAccountMasked(key)+'</div>',
+          '<div class="star-badges">',
+            '<span class="badge blue"><i class="fa-solid fa-baht-sign"></i> ยอดเงินสูง</span>',
+            '<span class="badge green"><i class="fa-solid fa-clock-rotate-left"></i> ฝากถี่</span>',
+            '<span class="badge purple"><i class="fa-solid fa-ban"></i> ไม่เคยถอน</span>',
+          '</div>',
+        '</div>',
+      '</div>',
+      '<div class="subtitle">ยอดคงเหลือโดยประมาณ: <strong>'+amountTxt+'</strong> บาท • จำนวนครั้งฝาก: <strong>'+countTxt+'</strong></div>',
+      '<div class="class-tag"><i class="fa-solid fa-school"></i> '+cls+'</div>'
+    ].join('');
     wrap.appendChild(card);
   });
 }
 
 function renderLatest10(){
-  const rows=TX.map(r=>({...r,__d:parseThaiDate(r['วันที่'])})).filter(r=>r.__d).sort((a,b)=>b.__d-a.__d).slice(0,10);
+  const rows=(TX||[]).map(function(r){
+    const d=parseThaiDate(r['วันที่']);
+    var obj={}; Object.keys(r).forEach(k=>obj[k]=r[k]); obj.__d=d; return obj;
+  }).filter(r=>r.__d).sort((a,b)=>b.__d-a.__d).slice(0,10);
   const headers=['วันที่','บัญชี','รายการ','จำนวนเงิน','ชั้น'];
   const thead=document.getElementById('th-latest'); const tbody=document.getElementById('tb-latest'); thead.innerHTML=''; tbody.innerHTML='';
-  headers.forEach(h=>{ const th=document.createElement('th'); th.textContent=h; thead.appendChild(th); });
-  rows.forEach(r=>{
+  headers.forEach(function(h){ const th=document.createElement('th'); th.textContent=h; thead.appendChild(th); });
+  rows.forEach(function(r){
     const tr=document.createElement('tr');
-    const act=String(r['รายการ']||''); const badge=`<span class="badge-act ${act==='ฝาก'?'badge-dep':'badge-wdr'}"><i class="fa-solid ${act==='ฝาก'?'fa-arrow-down':'fa-arrow-up'}"></i> ${act}</span>`;
+    const act=String(r['รายการ']||''); const badge='<span class="badge-act '+(act==='ฝาก'?'badge-dep':'badge-wdr')+'"><i class="fa-solid '+(act==='ฝาก'?'fa-arrow-down':'fa-arrow-up')+'"></i> '+act+'</span>';
     const cells=[ r['วันที่']||'', formatAccountMasked(r['บัญชี']||''), '', fmtNumber(r['จำนวนเงิน']||''), r['ชั้น']||r['ห้อง']||'' ];
-    cells.forEach((v,i)=>{ const td=document.createElement('td'); if(i===2){ td.innerHTML=badge; } else { td.textContent=String(v);} tr.appendChild(td); });
+    cells.forEach(function(v,i){ const td=document.createElement('td'); if(i===2){ td.innerHTML=badge; } else { td.textContent=String(v);} tr.appendChild(td); });
     tbody.appendChild(tr);
   });
 }
@@ -174,12 +193,12 @@ function renderLatest10(){
 // =================== KPIs ===================
 function renderWeeklyKPIs(){
   let depCount=0,wdrCount=0,depAmt=0,wdrAmt=0; const classCount=new Map();
-  TX.forEach(r=>{
+  (TX||[]).forEach(function(r){
     const d=parseThaiDate(r['วันที่']); if(!isThisWeek(d)) return;
     const act=String(r['รายการ']||'').trim(); const amt=toNumber(r['จำนวนเงิน']);
     const cls=String(r['ชั้น']||r['ห้อง']||'ไม่ระบุ');
-    if(act==='ฝาก'){ depCount++; depAmt+=Number.isFinite(amt)?amt:0; }
-    else if(act==='ถอน'){ wdrCount++; wdrAmt+=Number.isFinite(amt)?amt:0; }
+    if(act==='ฝาก'){ depCount++; depAmt+=isFinite(amt)?amt:0; }
+    else if(act==='ถอน'){ wdrCount++; wdrAmt+=isFinite(amt)?amt:0; }
     classCount.set(cls,(classCount.get(cls)||0)+1);
   });
   let topClass='-',topClassCount=0;
@@ -215,8 +234,8 @@ async function loadProfileAvatar(){
     await liff.init({liffId:LIFF_ID});
     if(liff.isLoggedIn()){
       const p=await liff.getProfile();
-      if(p?.pictureUrl) document.getElementById('avatar').src=p.pictureUrl;
-      if(p?.displayName){ document.getElementById('prof-name').textContent=p.displayName; document.getElementById('prof-status').textContent='เข้าสู่ระบบแล้ว'; }
+      if(p && p.pictureUrl) document.getElementById('avatar').src=p.pictureUrl;
+      if(p && p.displayName){ document.getElementById('prof-name').textContent=p.displayName; document.getElementById('prof-status').textContent='เข้าสู่ระบบแล้ว'; }
       document.getElementById('loginBadge').classList.remove('show');
     } else {
       document.getElementById('prof-status').textContent='ยังไม่เข้าสู่ระบบ';
@@ -230,30 +249,57 @@ async function loadProfileAvatar(){
 
 // =================== Flex Share with LIFF button ===================
 function flexWithOpenButton(bubble){
-  const uri=`https://liff.line.me/${LIFF_ID}`;
-  const footer={type:'box',layout:'vertical',spacing:'sm',contents:[{type:'button',style:'primary',action:{type:'uri',label:'เปิด WDBank (LIFF)',uri}}]};
+  var uri='https://liff.line.me/'+LIFF_ID;
+  var footer={
+    type:'box',
+    layout:'vertical',
+    spacing:'sm',
+    contents:[
+      { type:'button', style:'primary', action:{ type:'uri', label:'เปิด WDBank (LIFF)', uri:uri } }
+    ]
+  };
   bubble.footer=footer; return bubble;
 }
 function buildFlexFromRows(title,rows){
-  if(!rows?.length) return null;
+  if(!(rows && rows.length)) return null;
   const headers=Object.keys(rows[0]);
-  const headerBox={type:'box',layout:'horizontal',contents:headers.map(h=>({type:'text',text:cut(h,12),size:'xs',weight:'bold',align:'center',flex:1}))};
-  const dataRows=rows.map((r,i)=>({
-    type:'box',layout:'horizontal',backgroundColor=i%2?'#FFFFFF':'#F5F6FA',
-    contents:headers.map(h=>({type:'text',text:cut((isAccountHeader(h)? formatAccountMasked(r[h]) : (isNumeric(r[h])? fmtNumber(r[h]): (r[h]??''))),16),size:'xs',align:'center',flex:1}))
-  }));
-  const bubble={type:'bubble',size:'giga',body:{type:'box',layout:'vertical',contents:[
-    {type:'text',text:title,weight:'bold',size:'lg'},
-    {type:'text',text:`ออมก่อนใช้ • ${thaiDateString()}`,color:'#7286D3',size:'sm'},
-    {type:'separator',margin:'md'}, headerBox,
-    {type:'separator',margin:'sm'},
-    {type:'box',layout:'vertical',margin:'md',spacing:'sm',contents:dataRows}
-  ]}};
-  return {type:'flex',altText:title,contents:flexWithOpenButton(bubble)};
+  const headerBox={
+    type:'box',
+    layout:'horizontal',
+    contents: headers.map(function(h){
+      return {type:'text', text: cut(h,12), size:'xs', weight:'bold', align:'center', flex:1};
+    })
+  };
+  const dataRows=rows.map(function(r,i){
+    return {
+      type:'box',
+      layout:'horizontal',
+      backgroundColor: (i%2 ? '#FFFFFF' : '#F5F6FA'),
+      contents: headers.map(function(h){
+        var v = isAccountHeader(h) ? formatAccountMasked(r[h]) : (isNumeric(r[h])? fmtNumber(r[h]) : (r[h]==null?'':r[h]));
+        return { type:'text', text: cut(v,16), size:'xs', align:'center', flex:1 };
+      })
+    };
+  });
+  const bubble={
+    type:'bubble', size:'giga',
+    body:{
+      type:'box', layout:'vertical',
+      contents:[
+        {type:'text', text:title, weight:'bold', size:'lg'},
+        {type:'text', text:'ออมก่อนใช้ • '+thaiDateString(), color:'#7286D3', size:'sm'},
+        {type:'separator', margin:'md'},
+        headerBox,
+        {type:'separator', margin:'sm'},
+        {type:'box', layout:'vertical', margin:'md', spacing:'sm', contents:dataRows}
+      ]
+    }
+  };
+  return {type:'flex', altText:title, contents:flexWithOpenButton(bubble)};
 }
-async function shareAmount(){ await ensureLogin(); const flex=buildFlexFromRows('WDBank • TOP 10 ยอดเงินสูง', TOP_AMOUNT); await liff.shareTargetPicker([flex]); liff.closeWindow&&liff.closeWindow(); }
-async function shareFrequent(){ await ensureLogin(); const flex=buildFlexFromRows('WDBank • TOP 10 ฝากถี่มาก', TOP_FREQ); await liff.shareTargetPicker([flex]); liff.closeWindow&&liff.closeWindow(); }
-async function shareDepositOnly(){ await ensureLogin(); const flex=buildFlexFromRows('WDBank • TOP 10 ไม่เคยถอน (ฝาก ≥ ค่าเฉลี่ย)', TOP_DEP); await liff.shareTargetPicker([flex]); liff.closeWindow&&liff.closeWindow(); }
+async function shareAmount(){ await ensureLogin(); const flex=buildFlexFromRows('WDBank • TOP 10 ยอดเงินสูง', TOP_AMOUNT); await liff.shareTargetPicker([flex]); if(liff.closeWindow) liff.closeWindow(); }
+async function shareFrequent(){ await ensureLogin(); const flex=buildFlexFromRows('WDBank • TOP 10 ฝากถี่มาก', TOP_FREQ); await liff.shareTargetPicker([flex]); if(liff.closeWindow) liff.closeWindow(); }
+async function shareDepositOnly(){ await ensureLogin(); const flex=buildFlexFromRows('WDBank • TOP 10 ไม่เคยถอน (ฝาก ≥ ค่าเฉลี่ย)', TOP_DEP); await liff.shareTargetPicker([flex]); if(liff.closeWindow) liff.closeWindow(); }
 async function shareAllStars(){
   await ensureLogin();
   const A=new Set(TOP_AMOUNT.map(r=>String(Object.values(r)[0])));
@@ -261,26 +307,27 @@ async function shareAllStars(){
   const C=new Set(TOP_DEP.map(r=>String(Object.values(r)[0])));
   const inter=[...A].filter(k=>B.has(k)&&C.has(k)).slice(0,3).map(k=>({key:k}));
   const headers=['เลขบัญชี','คุณสมบัติ'];
-  const headerBox={type:'box',layout:'horizontal',contents:headers.map(h=>({type:'text',text:h,size:'xs',weight:'bold',align:'center',flex:1}))};
-  const dataRows=inter.map((r,i)=>({
-    type:'box',layout:'horizontal',backgroundColor=i%2?'#FFFFFF':'#F5F6FA',
-    contents:[
-      {type:'text',text:cut(formatAccountMasked(r.key),18),size:'xs',align:'center',flex:1},
-      {type:'text',text:'ยอดสูง • ฝากถี่ • ไม่เคยถอน',size:'xs',align:'center',flex:1}
-    ]
-  }));
+  const headerBox={type:'box',layout:'horizontal',contents:headers.map(function(h){return {type:'text',text:h,size:'xs',weight:'bold',align:'center',flex:1};})};
+  const dataRows=inter.map(function(r,i){
+    return { type:'box', layout:'horizontal', backgroundColor:(i%2?'#FFFFFF':'#F5F6FA'),
+      contents:[
+        {type:'text',text:cut(formatAccountMasked(r.key),18),size:'xs',align:'center',flex:1},
+        {type:'text',text:'ยอดสูง • ฝากถี่ • ไม่เคยถอน',size:'xs',align:'center',flex:1}
+      ]
+    };
+  });
   const bubble={type:'bubble',size:'giga',body:{type:'box',layout:'vertical',contents:[
     {type:'text',text:'WDBank • 3 บัญชีเด่น',weight:'bold',size:'lg'},
-    {type:'text',text:`ออมก่อนใช้ • ${thaiDateString()}`,color:'#7286D3',size:'sm'},
+    {type:'text',text:'ออมก่อนใช้ • '+thaiDateString(),color:'#7286D3',size:'sm'},
     {type:'separator',margin:'md'}, headerBox,
     {type:'separator',margin:'sm'},
     {type:'box',layout:'vertical',margin:'md',spacing:'sm',contents:dataRows}
   ]}};
   const flex={type:'flex',altText:'WDBank • 3 บัญชีเด่น',contents:flexWithOpenButton(bubble)};
-  await liff.shareTargetPicker([flex]); liff.closeWindow&&liff.closeWindow();
+  await liff.shareTargetPicker([flex]); if(liff.closeWindow) liff.closeWindow();
 }
 
-// =================== PDF (same as v6.3.1) ===================
+// =================== PDF and Reports (same as 6.3.2) ===================
 function buildPDFShell(title){
   const school='โรงเรียนของเรา';
   const wrap=document.createElement('div');
@@ -292,7 +339,7 @@ function buildPDFShell(title){
   headBox.appendChild(h1); headBox.appendChild(h2);
   header.appendChild(img); header.appendChild(headBox);
   wrap.appendChild(header);
-  const meta=document.createElement('div'); meta.className='meta'; meta.textContent = `${school} • ออมก่อนใช้ • วันที่ ${thaiDateString()}`;
+  const meta=document.createElement('div'); meta.className='meta'; meta.textContent = school+' • ออมก่อนใช้ • วันที่ '+thaiDateString();
   wrap.appendChild(meta);
   return wrap;
 }
@@ -317,12 +364,12 @@ async function renderPDF(node, filename){
 }
 function buildPDFTable(headers, rows){
   const table=document.createElement('table'); const thead=document.createElement('thead'); const trh=document.createElement('tr');
-  headers.forEach(h=>{ const th=document.createElement('th'); th.textContent=h; trh.appendChild(th); }); thead.appendChild(trh); table.appendChild(thead);
+  headers.forEach(function(h){ const th=document.createElement('th'); th.textContent=h; trh.appendChild(th); }); thead.appendChild(trh); table.appendChild(thead);
   const tbody=document.createElement('tbody');
-  rows.forEach(r=>{
-    const tr=document.createElement('tr'); headers.forEach(h=>{
+  rows.forEach(function(r){
+    const tr=document.createElement('tr'); headers.forEach(function(h){
       const td=document.createElement('td'); const v=r[h];
-      const text=isAccountHeader(h)? formatAccountMasked(v) : (isNumeric(v)? fmtNumber(v): String(v??''));
+      const text=isAccountHeader(h)? formatAccountMasked(v) : (isNumeric(v)? fmtNumber(v): String(v==null?'':v));
       td.textContent=text; tr.appendChild(td);
     }); tbody.appendChild(tr);
   });
@@ -336,7 +383,7 @@ async function exportPDF(which){
   if(!rows.length){ return alert('ไม่มีข้อมูลสำหรับรายงาน'); }
   headers=headersOf(rows);
   const wrap=buildPDFShell(title); wrap.appendChild(buildPDFTable(headers, rows));
-  addSignatureBlock(wrap); await renderPDF(wrap, `WDBank-${which}-${new Date().toISOString().slice(0,10)}.pdf`);
+  addSignatureBlock(wrap); await renderPDF(wrap, 'WDBank-'+which+'-'+new Date().toISOString().slice(0,10)+'.pdf');
 }
 function addSignatureBlock(wrap){
   const row=document.createElement('div'); row.className='sign-row';
@@ -348,60 +395,61 @@ function parseDateRangeFilter(kind){
   const now=new Date(); let start,end;
   if(kind==='week'){ start=new Date(now); const day=(now.getDay()+6)%7; start.setDate(now.getDate()-day); start.setHours(0,0,0,0); end=new Date(start); end.setDate(start.getDate()+7); }
   else if(kind==='month'){ start=new Date(now.getFullYear(), now.getMonth(), 1, 0,0,0,0); end=new Date(now.getFullYear(), now.getMonth()+1, 1, 0,0,0,0); }
-  return {start,end};
+  return {start:start,end:end};
 }
 function inRange(d,start,end){ return d && d>=start && d<end; }
 function buildTxInsightsRange(start,end){
   let depCount=0,wdrCount=0,depAmt=0,wdrAmt=0; const classCount=new Map();
-  TX.forEach(r=>{
+  (TX||[]).forEach(function(r){
     const d=parseThaiDate(r['วันที่']); if(!inRange(d,start,end)) return;
     const act=String(r['รายการ']||'').trim(); const amt=toNumber(r['จำนวนเงิน']); const cls=String(r['ชั้น']||r['ห้อง']||'ไม่ระบุ');
-    if(act==='ฝาก'){ depCount++; depAmt+=Number.isFinite(amt)?amt:0; } else if(act==='ถอน'){ wdrCount++; wdrAmt+=Number.isFinite(amt)?amt:0; }
+    if(act==='ฝาก'){ depCount++; depAmt+=isFinite(amt)?amt:0; } else if(act==='ถอน'){ wdrCount++; wdrAmt+=isFinite(amt)?amt:0; }
     classCount.set(cls,(classCount.get(cls)||0)+1);
   });
   let topClass='-',topClassCount=0;
   for(const [k,v] of classCount.entries()){ if(v>topClassCount){ topClass=k; topClassCount=v; } }
   const net=depAmt-wdrAmt;
-  const text=`ช่วงข้อมูล: ${thaiDateString(start)} – ${thaiDateString(end)}
-• ฝาก: ${depCount.toLocaleString('th-TH')} ครั้ง (รวม ${fmtNumber(depAmt)} บาท)
-• ถอน: ${wdrCount.toLocaleString('th-TH')} ครั้ง (รวม ${fmtNumber(wdrAmt)} บาท)
-• เงินไหลสุทธิ (ฝาก-ถอน): ${fmtNumber(net)} บาท
-• ชั้นที่เคลื่อนไหวสูงสุด: ${topClass} (${topClassCount.toLocaleString('th-TH')} ครั้ง)`;
-  const div=document.createElement('div'); div.className='insight'; div.innerHTML=`<strong>สรุปช่วงเวลา</strong><br>${text.replace(/\\n/g,'<br>')}`; return {node:div};
+  const text='ช่วงข้อมูล: '+thaiDateString(start)+' – '+thaiDateString(end)
+    +'\n• ฝาก: '+depCount.toLocaleString('th-TH')+' ครั้ง (รวม '+fmtNumber(depAmt)+' บาท)'
+    +'\n• ถอน: '+wdrCount.toLocaleString('th-TH')+' ครั้ง (รวม '+fmtNumber(wdrAmt)+' บาท)'
+    +'\n• เงินไหลสุทธิ (ฝาก-ถอน): '+fmtNumber(net)+' บาท'
+    +'\n• ชั้นที่เคลื่อนไหวสูงสุด: '+topClass+' ('+topClassCount.toLocaleString('th-TH')+' ครั้ง)';
+  const div=document.createElement('div'); div.className='insight'; div.innerHTML='<strong>สรุปช่วงเวลา</strong><br>'+text.replace(/\n/g,'<br>'); return {node:div};
 }
 async function exportSummaryPDF(kind){
-  const {start,end}=parseDateRangeFilter(kind);
+  const d=parseDateRangeFilter(kind);
+  const start=d.start, end=d.end;
   const wrap=buildPDFShell(kind==='week'?'สรุปรายสัปดาห์':'สรุปรายเดือน');
   const insight=buildTxInsightsRange(start,end); if(insight.node) wrap.appendChild(insight.node);
   const classAgg=new Map();
-  TX.forEach(r=>{
-    const d=parseThaiDate(r['วันที่']); if(!inRange(d,start,end)) return;
+  (TX||[]).forEach(function(r){
+    const dd=parseThaiDate(r['วันที่']); if(!inRange(dd,start,end)) return;
     const cls=String(r['ชั้น']||r['ห้อง']||'ไม่ระบุ');
     const act=String(r['รายการ']||'').trim();
     const amt=toNumber(r['จำนวนเงิน']);
     const obj=classAgg.get(cls)||{ฝาก:0,ถอน:0,ครั้งฝาก:0,ครั้งถอน:0};
-    if(act==='ฝาก'){ obj.ฝาก+=Number.isFinite(amt)?amt:0; obj.ครั้งฝาก++; }
-    else if(act==='ถอน'){ obj.ถอน+=Number.isFinite(amt)?amt:0; obj.ครั้งถอน++; }
+    if(act==='ฝาก'){ obj.ฝาก+=isFinite(amt)?amt:0; obj.ครั้งฝาก++; }
+    else if(act==='ถอน'){ obj.ถอน+=isFinite(amt)?amt:0; obj.ครั้งถอน++; }
     classAgg.set(cls,obj);
   });
   const table=document.createElement('table'); const thead=document.createElement('thead'); thead.innerHTML='<tr><th>ชั้น</th><th>ครั้งฝาก</th><th>ครั้งถอน</th><th>รวมฝาก</th><th>รวมถอน</th><th>สุทธิ</th></tr>'; const tbody=document.createElement('tbody');
   for(const [cls,v] of classAgg.entries()){
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${cls}</td><td>${fmtNumber(v.ครั้งฝาก)}</td><td>${fmtNumber(v.ครั้งถอน)}</td><td>${fmtNumber(v.ฝาก)}</td><td>${fmtNumber(v.ถอน)}</td><td>${fmtNumber(v.ฝาก - v.ถอน)}</td>`;
+    tr.innerHTML='<td>'+cls+'</td><td>'+fmtNumber(v.ครั้งฝาก)+'</td><td>'+fmtNumber(v.ครั้งถอน)+'</td><td>'+fmtNumber(v.ฝาก)+'</td><td>'+fmtNumber(v.ถอน)+'</td><td>'+fmtNumber(v.ฝาก - v.ถอน)+'</td>';
     tbody.appendChild(tr);
   }
   table.appendChild(thead); table.appendChild(tbody); wrap.appendChild(table);
-  addSignatureBlock(wrap); await renderPDF(wrap, `WDBank-summary-${kind}-${new Date().toISOString().slice(0,10)}.pdf`);
+  addSignatureBlock(wrap); await renderPDF(wrap, 'WDBank-summary-'+kind+'-'+new Date().toISOString().slice(0,10)+'.pdf');
 }
 function buildClassBalanceSummary(){
   const rows=Array.isArray(AC)? AC:[]; const result=new Map();
-  rows.forEach(r=>{
+  rows.forEach(function(r){
     const cls=String(r['ห้อง']||r['ชั้น']||'ไม่ระบุ');
     const dep=toNumber(r['ฝาก']); const wdr=toNumber(r['ถอน']); const bal=toNumber(r['จำนวนเงินคงเหลือ']);
     const depC=toNumber(r['จำนวนครั้งที่ฝาก']); const wdrC=toNumber(r['จำนวนครั้งที่ถอน']);
     const obj=result.get(cls)||{ฝาก:0,ถอน:0,คงเหลือ:0,ครั้งฝาก:0,ครั้งถอน:0,บัญชี:0};
-    obj.ฝาก+=Number.isFinite(dep)?dep:0; obj.ถอน+=Number.isFinite(wdr)?wdr:0; obj.คงเหลือ+=Number.isFinite(bal)?bal:0;
-    obj.ครั้งฝาก+=Number.isFinite(depC)?depC:0; obj.ครั้งถอน+=Number.isFinite(wdrC)?wdrC:0; obj.บัญชี+=1;
+    obj.ฝาก+=isFinite(dep)?dep:0; obj.ถอน+=isFinite(wdr)?wdr:0; obj.คงเหลือ+=isFinite(bal)?bal:0;
+    obj.ครั้งฝาก+=isFinite(depC)?depC:0; obj.ครั้งถอน+=isFinite(wdrC)?wdrC:0; obj.บัญชี+=1;
     result.set(cls,obj);
   });
   const table=document.createElement('table'); const thead=document.createElement('thead');
@@ -409,14 +457,14 @@ function buildClassBalanceSummary(){
   const tbody=document.createElement('tbody');
   for(const [cls,v] of result.entries()){
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${cls}</td><td>${fmtNumber(v.บัญชี)}</td><td>${fmtNumber(v.ฝาก)}</td><td>${fmtNumber(v.ถอน)}</td><td>${fmtNumber(v.คงเหลือ)}</td><td>${fmtNumber(v.ครั้งฝาก)}</td><td>${fmtNumber(v.ครั้งถอน)}</td>`;
+    tr.innerHTML='<td>'+cls+'</td><td>'+fmtNumber(v.บัญชี)+'</td><td>'+fmtNumber(v.ฝาก)+'</td><td>'+fmtNumber(v.ถอน)+'</td><td>'+fmtNumber(v.คงเหลือ)+'</td><td>'+fmtNumber(v.ครั้งฝาก)+'</td><td>'+fmtNumber(v.ครั้งถอน)+'</td>';
     tbody.appendChild(tr);
   }
   table.appendChild(thead); table.appendChild(tbody); return table;
 }
 async function exportClassBalancePDF(){
   const wrap=buildPDFShell('ยอดคงเหลือรวมรายชั้น'); wrap.appendChild(buildClassBalanceSummary());
-  addSignatureBlock(wrap); await renderPDF(wrap, `WDBank-class-balance-${new Date().toISOString().slice(0,10)}.pdf`);
+  addSignatureBlock(wrap); await renderPDF(wrap, 'WDBank-class-balance-'+new Date().toISOString().slice(0,10)+'.pdf');
 }
 async function exportSavingsPDF(){
   const rows=Array.isArray(AC)? AC:[];
@@ -424,32 +472,34 @@ async function exportSavingsPDF(){
   if(!filtered.length){ return alert('ไม่มีบัญชีที่เป็นออมสิน (TRUE)'); }
   const wrap=buildPDFShell('บัญชีสำหรับนำฝากต่อธนาคารออมสิน');
   let sumBal=0,sumDep=0,sumWdr=0,count=filtered.length;
-  filtered.forEach(r=>{
-    sumBal+=Number.isFinite(toNumber(r['จำนวนเงินคงเหลือ']))?toNumber(r['จำนวนเงินคงเหลือ']):0;
-    sumDep+=Number.isFinite(toNumber(r['ฝาก']))?toNumber(r['ฝาก']):0;
-    sumWdr+=Number.isFinite(toNumber(r['ถอน']))?toNumber(r['ถอน']):0;
+  filtered.forEach(function(r){
+    sumBal+=isFinite(toNumber(r['จำนวนเงินคงเหลือ']))?toNumber(r['จำนวนเงินคงเหลือ']):0;
+    sumDep+=isFinite(toNumber(r['ฝาก']))?toNumber(r['ฝาก']):0;
+    sumWdr+=isFinite(toNumber(r['ถอน']))?toNumber(r['ถอน']):0;
   });
   const info=document.createElement('div');
   info.className='insight';
-  info.innerHTML=`<strong>สรุป</strong><br>จำนวนนำส่ง: ${fmtNumber(count)} บัญชี<br>รวมฝาก: ${fmtNumber(sumDep)} บาท • รวมถอน: ${fmtNumber(sumWdr)} บาท<br>คงเหลือรวม: ${fmtNumber(sumBal)} บาท`;
+  info.innerHTML='<strong>สรุป</strong><br>จำนวนนำส่ง: '+fmtNumber(count)+' บัญชี<br>รวมฝาก: '+fmtNumber(sumDep)+' บาท • รวมถอน: '+fmtNumber(sumWdr)+' บาท<br>คงเหลือรวม: '+fmtNumber(sumBal)+' บาท';
   wrap.appendChild(info);
   const headers=['บัญชี','ห้อง','ฝาก','ถอน','จำนวนเงินคงเหลือ','สถานะบัญชี'];
-  const rowsOut=filtered.map(r=>({
-    'บัญชี':formatAccountMasked(r['รหัสนักเรียน']||r['บัญชี']||''),
-    'ห้อง':r['ห้อง']||r['ชั้น']||'',
-    'ฝาก':fmtNumber(r['ฝาก']),
-    'ถอน':fmtNumber(r['ถอน']),
-    'จำนวนเงินคงเหลือ':fmtNumber(r['จำนวนเงินคงเหลือ']),
-    'สถานะบัญชี':r['สถานะบัญชี']||''
-  }));
+  const rowsOut=filtered.map(function(r){
+    return {
+      'บัญชี':formatAccountMasked(r['รหัสนักเรียน']||r['บัญชี']||''),
+      'ห้อง':r['ห้อง']||r['ชั้น']||'',
+      'ฝาก':fmtNumber(r['ฝาก']),
+      'ถอน':fmtNumber(r['ถอน']),
+      'จำนวนเงินคงเหลือ':fmtNumber(r['จำนวนเงินคงเหลือ']),
+      'สถานะบัญชี':r['สถานะบัญชี']||''
+    };
+  });
   wrap.appendChild(buildPDFTable(headers, rowsOut));
-  addSignatureBlock(wrap); await renderPDF(wrap, `WDBank-savings-gsb-${new Date().toISOString().slice(0,10)}.pdf`);
+  addSignatureBlock(wrap); await renderPDF(wrap, 'WDBank-savings-gsb-'+new Date().toISOString().slice(0,10)+'.pdf');
 }
 
 // =================== Events & Nav ===================
 function setupTabs(){
-  document.querySelectorAll('.tab').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
+  document.querySelectorAll('.tab').forEach(function(btn){
+    btn.addEventListener('click', function(){
       document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
       document.querySelectorAll('.panel').forEach(p=>p.classList.remove('show'));
       btn.classList.add('active');
@@ -483,7 +533,7 @@ function setupShareQuick(){
   document.getElementById('share-allstars-quick').addEventListener('click', shareAllStars);
 }
 
-document.addEventListener('DOMContentLoaded', ()=>{
+document.addEventListener('DOMContentLoaded', function(){
   loadAll(); loadProfileAvatar();
   setupTabs(); setupBottomNav(); setupReportHub(); setupShareQuick();
 
@@ -501,4 +551,4 @@ document.addEventListener('DOMContentLoaded', ()=>{
   document.getElementById('pdf-savings').addEventListener('click', exportSavingsPDF);
 });
 
-console.log('WDBank v6.3.2 loaded');
+console.log('WDBank v6.3.3 loaded');
