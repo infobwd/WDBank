@@ -68,6 +68,7 @@ button{font-family:inherit}
 .report-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:.6rem}
 .profile-grid{display:grid; grid-template-columns:1fr; gap:6px; margin-top:8px}
 .muted{margin-top:.5rem; color:#64748b; font-size:.9rem}
+.select{border:1px solid #cbd5e1; border-radius:10px; padding:.35rem .6rem; font-weight:700; background:#fff}
 
 .bottom-nav{position:fixed; left:0; right:0; bottom:0; z-index:80; display:grid; grid-template-columns:repeat(5,1fr); background:#fff; border-top:1px solid #e5e7eb; box-shadow:0 -6px 20px rgba(0,0,0,.05)}
 .nav-btn{display:flex; flex-direction:column; align-items:center; gap:4px; padding:.5rem 0; border:none; background:transparent; color:#64748b; font-weight:700}
