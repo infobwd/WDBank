@@ -102,11 +102,12 @@ button{font-family:inherit}
 .sk-text{height:14px; border-radius:8px}
 .sk-title{height:22px; width:60%; border-radius:8px}
 
+/* Responsive: force 2 cards per row on very small screens */
 @media (max-width: 800px){
   .kpi-grid{grid-template-columns:repeat(2,1fr)}
 }
 @media (max-width: 420px){
-  .kpi-grid{grid-template-columns:1fr}
+  .kpi-grid{grid-template-columns:repeat(2,1fr)} /* was 1fr, now 2 columns */
   .btn{padding:.45rem .6rem; font-size:.9rem}
   .btn.sm{padding:.35rem .5rem; font-size:.82rem}
 }

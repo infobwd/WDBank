@@ -29,6 +29,12 @@ function formatAccountMasked(val){
 }
 function headersOf(rows){ return Object.keys(rows?.[0]||{}); }
 
+// Remove skeleton helper
+function clearSkeleton(el){
+  if(!el) return;
+  el.classList.remove('sk','sk-text','sk-title');
+}
+
 // =================== Data ===================
 async function fetchJSON(url,{timeout=12000,retries=2}={}){
   const attempt=async()=>{
@@ -62,7 +68,9 @@ function isThisWeek(date){
 }
 
 async function loadAll(){
-  document.getElementById('todayThai').textContent=thaiDateString();
+  const todayEl=document.getElementById('todayThai');
+  todayEl.textContent=thaiDateString(); clearSkeleton(todayEl);
+
   try{
     const [A,B,C,T,X] = await Promise.allSettled([
       fetchJSON(SHEET_AMOUNT), fetchJSON(SHEET_FREQUENT), fetchJSON(SHEET_DEPOSITONLY),
@@ -176,13 +184,21 @@ function renderWeeklyKPIs(){
   });
   let topClass='-',topClassCount=0;
   for(const [k,v] of classCount.entries()){ if(v>topClassCount){ topClass=k; topClassCount=v; } }
-  document.getElementById('kpiDepCount').textContent=depCount.toLocaleString('th-TH')+' ครั้ง';
-  document.getElementById('kpiDepAmt').textContent='รวม '+fmtNumber(depAmt)+' บาท';
-  document.getElementById('kpiWdrCount').textContent=wdrCount.toLocaleString('th-TH')+' ครั้ง';
-  document.getElementById('kpiWdrAmt').textContent='รวม '+fmtNumber(wdrAmt)+' บาท';
-  document.getElementById('kpiNet').textContent=fmtNumber(depAmt-wdrAmt)+' บาท';
-  document.getElementById('kpiTopClass').textContent=topClass;
-  document.getElementById('kpiTopClassDetail').textContent=topClass==='-'?'-':(topClassCount.toLocaleString('th-TH')+' ครั้งสัปดาห์นี้');
+  const elDepC=document.getElementById('kpiDepCount');
+  const elDepA=document.getElementById('kpiDepAmt');
+  const elWdrC=document.getElementById('kpiWdrCount');
+  const elWdrA=document.getElementById('kpiWdrAmt');
+  const elNet=document.getElementById('kpiNet');
+  const elTop=document.getElementById('kpiTopClass');
+  const elTopD=document.getElementById('kpiTopClassDetail');
+
+  elDepC.textContent=depCount.toLocaleString('th-TH')+' ครั้ง'; clearSkeleton(elDepC);
+  elDepA.textContent='รวม '+fmtNumber(depAmt)+' บาท'; clearSkeleton(elDepA);
+  elWdrC.textContent=wdrCount.toLocaleString('th-TH')+' ครั้ง'; clearSkeleton(elWdrC);
+  elWdrA.textContent='รวม '+fmtNumber(wdrAmt)+' บาท'; clearSkeleton(elWdrA);
+  elNet.textContent=fmtNumber(depAmt-wdrAmt)+' บาท'; clearSkeleton(elNet);
+  elTop.textContent=topClass; clearSkeleton(elTop);
+  elTopD.textContent=topClass==='-'?'-':(topClassCount.toLocaleString('th-TH')+' ครั้งสัปดาห์นี้'); clearSkeleton(elTopD);
 }
 
 // =================== LIFF ===================
@@ -223,7 +239,7 @@ function buildFlexFromRows(title,rows){
   const headers=Object.keys(rows[0]);
   const headerBox={type:'box',layout:'horizontal',contents:headers.map(h=>({type:'text',text:cut(h,12),size:'xs',weight:'bold',align:'center',flex:1}))};
   const dataRows=rows.map((r,i)=>({
-    type:'box',layout:'horizontal',backgroundColor:i%2?'#FFFFFF':'#F5F6FA',
+    type:'box',layout:'horizontal',backgroundColor=i%2?'#FFFFFF':'#F5F6FA',
     contents:headers.map(h=>({type:'text',text:cut((isAccountHeader(h)? formatAccountMasked(r[h]) : (isNumeric(r[h])? fmtNumber(r[h]): (r[h]??''))),16),size:'xs',align:'center',flex:1}))
   }));
   const bubble={type:'bubble',size:'giga',body:{type:'box',layout:'vertical',contents:[
@@ -247,7 +263,7 @@ async function shareAllStars(){
   const headers=['เลขบัญชี','คุณสมบัติ'];
   const headerBox={type:'box',layout:'horizontal',contents:headers.map(h=>({type:'text',text:h,size:'xs',weight:'bold',align:'center',flex:1}))};
   const dataRows=inter.map((r,i)=>({
-    type:'box',layout:'horizontal',backgroundColor:i%2?'#FFFFFF':'#F5F6FA',
+    type:'box',layout:'horizontal',backgroundColor=i%2?'#FFFFFF':'#F5F6FA',
     contents:[
       {type:'text',text:cut(formatAccountMasked(r.key),18),size:'xs',align:'center',flex:1},
       {type:'text',text:'ยอดสูง • ฝากถี่ • ไม่เคยถอน',size:'xs',align:'center',flex:1}
@@ -264,7 +280,7 @@ async function shareAllStars(){
   await liff.shareTargetPicker([flex]); liff.closeWindow&&liff.closeWindow();
 }
 
-// =================== PDF ===================
+// =================== PDF (same as v6.3.1) ===================
 function buildPDFShell(title){
   const school='โรงเรียนของเรา';
   const wrap=document.createElement('div');
@@ -485,4 +501,4 @@ document.addEventListener('DOMContentLoaded', ()=>{
   document.getElementById('pdf-savings').addEventListener('click', exportSavingsPDF);
 });
 
-console.log('WDBank v6.3.1 loaded');
+console.log('WDBank v6.3.2 loaded');
