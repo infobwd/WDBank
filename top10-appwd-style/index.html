@@ -1,29 +1,18 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>WDBank — รายงานรวม</title>
-
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;700&display=swap" rel="stylesheet">
-
-  <!-- Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-
-  <!-- SweetAlert2 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-  <!-- LINE LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script>
-
-  <!-- jsPDF + html2canvas -->
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-
-  <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
   <header class="appbar">
@@ -42,7 +31,7 @@
   </header>
 
   <main class="container pb-safe">
-    <!-- Dashboard (Home) -->
+    <!-- Home -->
     <section id="view-home" class="view show">
       <section class="card">
         <div class="section-head">
@@ -72,26 +61,10 @@
           </div>
         </div>
         <div class="kpi-grid">
-          <div class="kpi">
-            <div class="kpi-h">ฝากสัปดาห์นี้</div>
-            <div class="kpi-v sk sk-title" id="kpiDepCount">-</div>
-            <div class="kpi-sub sk sk-text" id="kpiDepAmt">-</div>
-          </div>
-          <div class="kpi">
-            <div class="kpi-h">ถอนสัปดาห์นี้</div>
-            <div class="kpi-v sk sk-title" id="kpiWdrCount">-</div>
-            <div class="kpi-sub sk sk-text" id="kpiWdrAmt">-</div>
-          </div>
-          <div class="kpi">
-            <div class="kpi-h">เงินไหลสุทธิ</div>
-            <div class="kpi-v sk sk-title" id="kpiNet">-</div>
-            <div class="kpi-sub">ฝาก − ถอน</div>
-          </div>
-          <div class="kpi">
-            <div class="kpi-h">ชั้นที่เคลื่อนไหวสูงสุด</div>
-            <div class="kpi-v sk sk-title" id="kpiTopClass">-</div>
-            <div class="kpi-sub sk sk-text" id="kpiTopClassDetail">-</div>
-          </div>
+          <div class="kpi"><div class="kpi-h">ฝากสัปดาห์นี้</div><div class="kpi-v sk sk-title" id="kpiDepCount">-</div><div class="kpi-sub sk sk-text" id="kpiDepAmt">-</div></div>
+          <div class="kpi"><div class="kpi-h">ถอนสัปดาห์นี้</div><div class="kpi-v sk sk-title" id="kpiWdrCount">-</div><div class="kpi-sub sk sk-text" id="kpiWdrAmt">-</div></div>
+          <div class="kpi"><div class="kpi-h">เงินไหลสุทธิ</div><div class="kpi-v sk sk-title" id="kpiNet">-</div><div class="kpi-sub">ฝาก − ถอน</div></div>
+          <div class="kpi"><div class="kpi-h">ชั้นที่เคลื่อนไหวสูงสุด</div><div class="kpi-v sk sk-title" id="kpiTopClass">-</div><div class="kpi-sub sk sk-text" id="kpiTopClassDetail">-</div></div>
         </div>
       </section>
 
@@ -116,12 +89,7 @@
               </div>
             </div>
             <div class="table-wrap">
-              <table class="table" id="table-amount">
-                <thead><tr id="th-amount"></tr></thead>
-                <tbody id="tb-amount">
-                  <tr class="sk"><td class="sk sk-text" colspan="5">กำลังโหลด…</td></tr>
-                </tbody>
-              </table>
+              <table class="table" id="table-amount"><thead><tr id="th-amount"></tr></thead><tbody id="tb-amount"><tr class="sk"><td class="sk sk-text" colspan="5">กำลังโหลด…</td></tr></tbody></table>
             </div>
           </section>
         </div>
@@ -139,12 +107,7 @@
               </div>
             </div>
             <div class="table-wrap">
-              <table class="table" id="table-frequent">
-                <thead><tr id="th-frequent"></tr></thead>
-                <tbody id="tb-frequent">
-                  <tr class="sk"><td class="sk sk-text" colspan="5">กำลังโหลด…</td></tr>
-                </tbody>
-              </table>
+              <table class="table" id="table-frequent"><thead><tr id="th-frequent"></tr></thead><tbody id="tb-frequent"><tr class="sk"><td class="sk sk-text" colspan="5">กำลังโหลด…</td></tr></tbody></table>
             </div>
           </section>
         </div>
@@ -162,30 +125,49 @@
               </div>
             </div>
             <div class="table-wrap">
-              <table class="table" id="table-depositonly">
-                <thead><tr id="th-depositonly"></tr></thead>
-                <tbody id="tb-depositonly">
-                  <tr class="sk"><td class="sk sk-text" colspan="5">กำลังโหลด…</td></tr>
-                </tbody>
-              </table>
+              <table class="table" id="table-depositonly"><thead><tr id="th-depositonly"></tr></thead><tbody id="tb-depositonly"><tr class="sk"><td class="sk sk-text" colspan="5">กำลังโหลด…</td></tr></tbody></table>
             </div>
           </section>
         </div>
 
         <div id="panel-latest" class="panel">
           <section class="card">
-            <div class="section-head">
-              <div class="title">10 รายการฝากถอนล่าสุด</div>
-            </div>
+            <div class="section-head"><div class="title">10 รายการฝากถอนล่าสุด</div></div>
             <div class="table-wrap">
-              <table class="table" id="table-latest">
-                <thead><tr id="th-latest"></tr></thead>
-                <tbody id="tb-latest">
-                  <tr class="sk"><td class="sk sk-text" colspan="5">กำลังโหลด…</td></tr>
-                </tbody>
-              </table>
+              <table class="table" id="table-latest"><thead><tr id="th-latest"></tr></thead><tbody id="tb-latest"><tr class="sk"><td class="sk sk-text" colspan="5">กำลังโหลด…</td></tr></tbody></table>
             </div>
           </section>
+        </div>
+      </section>
+    </section>
+
+    <!-- Leaderboard -->
+    <section id="view-leaderboard" class="view">
+      <section class="card">
+        <div class="section-head">
+          <div class="title"><i class="fa-solid fa-ranking-star"></i> ลีดเดอร์บอร์ดระดับชั้น</div>
+        </div>
+        <div class="actions wrap" style="margin-bottom:.4rem">
+          <button id="lb-pdf-week" class="btn btn-primary sm"><i class="fa-solid fa-file-pdf"></i> PDF สัปดาห์นี้</button>
+          <button id="lb-pdf-month" class="btn btn-primary sm"><i class="fa-solid fa-file-pdf"></i> PDF เดือนนี้</button>
+          <button id="lb-pdf-term" class="btn btn-primary sm"><i class="fa-solid fa-file-pdf"></i> PDF เทอมนี้</button>
+        </div>
+        <div class="seg-pills">
+          <button class="pill active" data-scope="week">สัปดาห์นี้</button>
+          <button class="pill" data-scope="month">เดือนนี้</button>
+          <button class="pill" data-scope="term">เทอมนี้</button>
+        </div>
+        <div class="table-wrap">
+          <table class="table" id="leader-table">
+            <thead>
+              <tr>
+                <th>ชั้น</th><th>ครั้งฝาก</th><th>ครั้งถอน</th><th>รวมฝาก</th><th>รวมถอน</th><th>สุทธิ</th>
+              </tr>
+            </thead>
+            <tbody id="leader-body">
+              <tr class="sk"><td class="sk sk-text" colspan="6">กำลังโหลด…</td></tr>
+            </tbody>
+          </table>
         </div>
       </section>
     </section>
@@ -196,7 +178,16 @@
         <div class="section-head">
           <div class="title"><i class="fa-solid fa-chart-pie"></i> ศูนย์รวมรายงาน (Report Hub)</div>
         </div>
-        <div class="report-grid">
+        <div class="seg-pills" id="chartScope">
+          <button class="pill active" data-scope="week">สัปดาห์นี้</button>
+          <button class="pill" data-scope="month">เดือนนี้</button>
+          <button class="pill" data-scope="term">เทอมนี้</button>
+        </div>
+        <div class="charts">
+          <div class="chart-card"><canvas id="chartBar" height="220"></canvas></div>
+          <div class="chart-card"><canvas id="chartLine" height="220"></canvas></div>
+        </div>
+        <div class="report-grid" style="margin-top:.8rem">
           <button id="hub-week" class="btn btn-primary"><i class="fa-solid fa-calendar-week"></i> PDF สัปดาห์นี้</button>
           <button id="hub-month" class="btn btn-primary"><i class="fa-solid fa-calendar-days"></i> PDF เดือนนี้</button>
           <button id="hub-classsum" class="btn btn-primary"><i class="fa-solid fa-layer-group"></i> PDF คงเหลือรายชั้น</button>
@@ -205,18 +196,14 @@
           <button id="hub-frequent" class="btn btn-primary"><i class="fa-solid fa-clock-rotate-left"></i> PDF Top10 ฝากถี่</button>
           <button id="hub-depositonly" class="btn btn-primary"><i class="fa-solid fa-ban"></i> PDF Top10 ไม่เคยถอน</button>
         </div>
-        <div class="muted">
-          รวมปุ่มออกเอกสารทั้งหมดไว้ที่นี่ให้แตะจาก Navbar ล่างได้สะดวก
-        </div>
+        <div class="muted">รวมปุ่มออกเอกสารทั้งหมดไว้ที่นี่ให้แตะจาก Navbar ล่างได้สะดวก</div>
       </section>
     </section>
 
     <!-- Share quick -->
     <section id="view-share" class="view">
       <section class="card">
-        <div class="section-head">
-          <div class="title"><i class="fa-brands fa-line"></i> แชร์ผ่าน LINE</div>
-        </div>
+        <div class="section-head"><div class="title"><i class="fa-brands fa-line"></i> แชร์ผ่าน LINE</div></div>
         <div class="report-grid">
           <button id="share-amount-quick" class="btn btn-line"><i class="fa-brands fa-line"></i> แชร์ Top10 ยอดสูง</button>
           <button id="share-frequent-quick" class="btn btn-line"><i class="fa-brands fa-line"></i> แชร์ Top10 ฝากถี่</button>
@@ -230,9 +217,7 @@
     <!-- Profile -->
     <section id="view-profile" class="view">
       <section class="card">
-        <div class="section-head">
-          <div class="title"><i class="fa-solid fa-user"></i> โปรไฟล์</div>
-        </div>
+        <div class="section-head"><div class="title"><i class="fa-solid fa-user"></i> โปรไฟล์</div></div>
         <div class="profile-grid">
           <div><strong>สถานะ:</strong> <span id="prof-status">กำลังตรวจสอบ…</span></div>
           <div><strong>ชื่อใน LINE:</strong> <span id="prof-name">-</span></div>
@@ -244,13 +229,14 @@
   <!-- Bottom Navbar -->
   <nav class="bottom-nav">
     <button class="nav-btn active" data-view="home"><i class="fa-solid fa-house"></i><span>หน้าหลัก</span></button>
+    <button class="nav-btn" data-view="leaderboard"><i class="fa-solid fa-ranking-star"></i><span>ลีดเดอร์บอร์ด</span></button>
     <button class="nav-btn" data-view="reports"><i class="fa-solid fa-chart-pie"></i><span>รายงาน</span></button>
     <button class="nav-btn" data-view="share"><i class="fa-brands fa-line"></i><span>แชร์</span></button>
     <button class="nav-btn" data-view="profile"><i class="fa-solid fa-user"></i><span>โปรไฟล์</span></button>
   </nav>
 
   <div id="pdfReport" class="pdf-report" aria-hidden="true"></div>
-
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="./app.js"></script>
 </body>
 </html>
