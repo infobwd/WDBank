@@ -1,5 +1,5 @@
 // =================== Config ===================
-const LIFF_ID = '2005230346-2OVa774O'; // TODO: แก้เป็น LIFF จริงของพี่
+const LIFF_ID = '2005230346-2OVa774O'; // TODO: replace with real LIFF ID
 
 const SHEET_AMOUNT      = 'https://opensheet.elk.sh/1EZtfvb0h9wYZbRFTGcm0KVPScnyu6B-boFG6aMpWEUo/Sortบัญชีเงินมากและฝากมากกว่าหรือเท่ากับค่าเฉลี่ย';
 const SHEET_FREQUENT    = 'https://opensheet.elk.sh/1EZtfvb0h9wYZbRFTGcm0KVPScnyu6B-boFG6aMpWEUo/Sortบัญชีฝากถี่มาก';
@@ -7,55 +7,9 @@ const SHEET_DEPOSITONLY = 'https://opensheet.elk.sh/1EZtfvb0h9wYZbRFTGcm0KVPScny
 const SHEET_TX          = 'https://opensheet.elk.sh/1EZtfvb0h9wYZbRFTGcm0KVPScnyu6B-boFG6aMpWEUo/Sortรายการฝากและถอน';
 const SHEET_ACCOUNTS    = 'https://opensheet.elk.sh/1EZtfvb0h9wYZbRFTGcm0KVPScnyu6B-boFG6aMpWEUo//บัญชี';
 
-// =================== Supabase Bootstrap ===================
-let supabase = null, BOOT_URL=null, BOOT_KEY=null;
-const LS_URL='wdbank.supa_url', LS_KEY='wdbank.supa_key';
-const SETTINGS_KEYS = ['school_name','semester','policy_text','supabase_url','supabase_anon_key'];
-
-function readMeta(name){ const el=document.querySelector(`meta[name="${name}"]`); return el?.content||null; }
-async function promptForBoot(){
-  const { value: formValues } = await Swal.fire({
-    title:'ใส่ค่า Supabase (ครั้งแรกเท่านั้น)',
-    html:'<input id="sw-url" class="swal2-input" placeholder="Supabase URL (https://xxx.supabase.co)"><input id="sw-key" class="swal2-input" placeholder="Anon Key">',
-    focusConfirm:false, confirmButtonText:'บันทึก',
-    preConfirm:()=>{
-      const url=document.getElementById('sw-url').value.trim();
-      const key=document.getElementById('sw-key').value.trim();
-      if(!url||!key){ Swal.showValidationMessage('กรุณากรอกให้ครบ'); return false;}
-      return {url,key};
-    }
-  });
-  if(formValues){
-    localStorage.setItem(LS_URL, formValues.url);
-    localStorage.setItem(LS_KEY, formValues.key);
-    return formValues;
-  }
-  throw new Error('User cancelled bootstrap');
-}
-async function resolveBootCreds(){
-  let url=readMeta('supabase-url')||localStorage.getItem(LS_URL);
-  let key=readMeta('supabase-anon-key')||localStorage.getItem(LS_KEY);
-  if(!url||!key){ const v=await promptForBoot(); url=v.url; key=v.key; }
-  BOOT_URL=url; BOOT_KEY=key; return {url,key};
-}
-function initClient(url,key){ supabase = window.supabase.createClient(url,key); return supabase; }
-async function fetchSettingsFromDB(){ const {data,error} = await supabase.from('settings').select('key,value').in('key', SETTINGS_KEYS); if(error) throw error; const map={}; (data||[]).forEach(r=>map[r.key]=r.value); return map; }
-async function initSupabaseFinal(){
-  if(!supabase){ const {url,key}=await resolveBootCreds(); initClient(url,key); }
-  let settings={};
-  try{ settings = await fetchSettingsFromDB(); }catch(e){ console.warn('อ่าน settings ไม่ได้:', e); return {settings, supabase}; }
-  const dbUrl=settings['supabase_url'], dbKey=settings['supabase_anon_key'];
-  if(dbUrl && dbKey && (dbUrl!==BOOT_URL || dbKey!==BOOT_KEY)){ BOOT_URL=dbUrl; BOOT_KEY=dbKey; initClient(BOOT_URL, BOOT_KEY); }
-  return { settings, supabase };
-}
-
 // =================== State & Utils ===================
-let H_AMOUNT=[], H_FREQ=[], H_DEP=[];
-let D_AMOUNT=[], D_FREQ=[], D_DEP=[];
+let D_AMOUNT=[], D_FREQ=[], D_DEP=[], TX=[], AC=[];
 let TOP_AMOUNT=[], TOP_FREQ=[], TOP_DEP=[];
-let TX=[], AC=[];
-
-let CURRENT_SETTINGS={};
 
 const isNumeric=(val)=>{ if(val===null||val===undefined) return false; const n=Number(String(val).replace(/[, ]/g,'')); return Number.isFinite(n); };
 const toNumber=(val)=> Number(String(val).replace(/[, ]/g,''));
@@ -74,10 +28,63 @@ function formatAccountMasked(val){
   return `${first} •••• ••${last2}`.trim();
 }
 function headersOf(rows){ return Object.keys(rows?.[0]||{}); }
-function clearSkeleton(){ document.querySelectorAll('.sk').forEach(el=>el.classList.remove('sk')); }
+
+// =================== Data ===================
+async function fetchJSON(url,{timeout=12000,retries=2}={}){
+  const attempt=async()=>{
+    const ctrl=new AbortController(); const t=setTimeout(()=>ctrl.abort(), timeout);
+    try{
+      const res=await fetch(url+(url.includes('?')?'&':'?')+'_ts='+Date.now(),{signal:ctrl.signal,cache:'no-store'});
+      clearTimeout(t); if(!res.ok) throw new Error('HTTP '+res.status);
+      return await res.json();
+    }catch(e){ clearTimeout(t); throw e; }
+  };
+  for(let i=0;i<=retries;i++){
+    try{ return await attempt(); }
+    catch(err){ if(i===retries) throw err; await new Promise(r=>setTimeout(r, 600*(i+1))); }
+  }
+}
+function parseThaiDate(s){
+  try{
+    const [datePart,timePart='00:00:00']=String(s).split(',').map(t=>t.trim());
+    const [d,m,y]=datePart.split('/').map(x=>parseInt(x,10));
+    const [hh,mm,ss]=timePart.split(':').map(x=>parseInt(x,10));
+    const gy=(y>2400)? y-543:y;
+    return new Date(gy,m-1,d,hh||0,mm||0,ss||0);
+  }catch(e){return null;}
+}
+function isThisWeek(date){
+  if(!date) return false; const now=new Date();
+  const start=new Date(now); const day=(now.getDay()+6)%7;
+  start.setDate(now.getDate()-day); start.setHours(0,0,0,0);
+  const end=new Date(start); end.setDate(start.getDate()+7);
+  return date>=start && date<end;
+}
+
+async function loadAll(){
+  document.getElementById('todayThai').textContent=thaiDateString();
+  try{
+    const [A,B,C,T,X] = await Promise.allSettled([
+      fetchJSON(SHEET_AMOUNT), fetchJSON(SHEET_FREQUENT), fetchJSON(SHEET_DEPOSITONLY),
+      fetchJSON(SHEET_TX), fetchJSON(SHEET_ACCOUNTS)
+    ]);
+    if(A.status==='fulfilled') D_AMOUNT=A.value; if(B.status==='fulfilled') D_FREQ=B.value; if(C.status==='fulfilled') D_DEP=C.value;
+    if(T.status==='fulfilled') TX=T.value; if(X.status==='fulfilled') AC=X.value;
+  }catch(e){
+    console.error('โหลดข้อมูลล้มเหลว', e);
+    Swal.fire('เกิดข้อผิดพลาด','มีปัญหาในการโหลดข้อมูลบางส่วน โปรดลองใหม่อีกครั้ง','error');
+  }
+  TOP_AMOUNT=D_AMOUNT.slice(0,10); TOP_FREQ=D_FREQ.slice(0,10); TOP_DEP=D_DEP.slice(0,10);
+  renderAllStars(); renderWeeklyKPIs(); renderLatest10();
+  renderTable('th-amount','tb-amount',TOP_AMOUNT);
+  renderTable('th-frequent','tb-frequent',TOP_FREQ);
+  renderTable('th-depositonly','tb-depositonly',TOP_DEP);
+}
 
 // =================== Rendering ===================
-function renderTable(headEl, bodyEl, rows){
+function renderTable(headId, bodyId, rows){
+  const headEl=document.getElementById(headId);
+  const bodyEl=document.getElementById(bodyId);
   headEl.innerHTML=''; bodyEl.innerHTML='';
   if(!rows?.length){ headEl.innerHTML='<th>ข้อมูล</th>'; bodyEl.innerHTML='<tr><td>ไม่พบข้อมูล</td></tr>'; return; }
   const headers = headersOf(rows);
@@ -142,22 +149,6 @@ function renderAllStars(){
   });
 }
 
-function parseThaiDate(s){
-  try{
-    const [datePart,timePart='00:00:00']=String(s).split(',').map(t=>t.trim());
-    const [d,m,y]=datePart.split('/').map(x=>parseInt(x,10));
-    const [hh,mm,ss]=timePart.split(':').map(x=>parseInt(x,10));
-    const gy=(y>2400)? y-543:y;
-    return new Date(gy,m-1,d,hh||0,mm||0,ss||0);
-  }catch(e){return null;}
-}
-function isThisWeek(date){
-  if(!date) return false; const now=new Date();
-  const start=new Date(now); const day=(now.getDay()+6)%7;
-  start.setDate(now.getDate()-day); start.setHours(0,0,0,0);
-  const end=new Date(start); end.setDate(start.getDate()+7);
-  return date>=start && date<end;
-}
 function renderLatest10(){
   const rows=TX.map(r=>({...r,__d:parseThaiDate(r['วันที่'])})).filter(r=>r.__d).sort((a,b)=>b.__d-a.__d).slice(0,10);
   const headers=['วันที่','บัญชี','รายการ','จำนวนเงิน','ชั้น'];
@@ -170,42 +161,6 @@ function renderLatest10(){
     cells.forEach((v,i)=>{ const td=document.createElement('td'); if(i===2){ td.innerHTML=badge; } else { td.textContent=String(v);} tr.appendChild(td); });
     tbody.appendChild(tr);
   });
-}
-
-// =================== Data ===================
-async function fetchJSON(url,{timeout=12000,retries=2}={}){
-  const attempt=async()=>{
-    const ctrl=new AbortController(); const t=setTimeout(()=>ctrl.abort(), timeout);
-    try{
-      const res=await fetch(url+(url.includes('?')?'&':'?')+'_ts='+Date.now(),{signal:ctrl.signal,cache:'no-store'});
-      clearTimeout(t); if(!res.ok) throw new Error('HTTP '+res.status);
-      return await res.json();
-    }catch(e){ clearTimeout(t); throw e; }
-  };
-  for(let i=0;i<=retries;i++){
-    try{ return await attempt(); }
-    catch(err){ if(i===retries) throw err; await new Promise(r=>setTimeout(r, 600*(i+1))); }
-  }
-}
-async function loadAll(){
-  document.getElementById('todayThai').textContent=thaiDateString();
-  try{
-    const [A,B,C,T,X] = await Promise.allSettled([
-      fetchJSON(SHEET_AMOUNT), fetchJSON(SHEET_FREQUENT), fetchJSON(SHEET_DEPOSITONLY),
-      fetchJSON(SHEET_TX), fetchJSON(SHEET_ACCOUNTS)
-    ]);
-    if(A.status==='fulfilled') D_AMOUNT=A.value; if(B.status==='fulfilled') D_FREQ=B.value; if(C.status==='fulfilled') D_DEP=C.value;
-    if(T.status==='fulfilled') TX=T.value; if(X.status==='fulfilled') AC=X.value;
-  }catch(e){
-    console.error('โหลดข้อมูลล้มเหลว', e);
-    Swal.fire('เกิดข้อผิดพลาด','มีปัญหาในการโหลดข้อมูลบางส่วน โปรดลองใหม่อีกครั้ง','error');
-  }
-  H_AMOUNT=headersOf(D_AMOUNT); H_FREQ=headersOf(D_FREQ); H_DEP=headersOf(D_DEP);
-  TOP_AMOUNT=D_AMOUNT.slice(0,10); TOP_FREQ=D_FREQ.slice(0,10); TOP_DEP=D_DEP.slice(0,10);
-  renderTable(document.getElementById('th-amount'),document.getElementById('tb-amount'),TOP_AMOUNT);
-  renderTable(document.getElementById('th-frequent'),document.getElementById('tb-frequent'),TOP_FREQ);
-  renderTable(document.getElementById('th-depositonly'),document.getElementById('tb-depositonly'),TOP_DEP);
-  renderAllStars(); renderWeeklyKPIs(); renderLatest10(); clearSkeleton();
 }
 
 // =================== KPIs ===================
@@ -245,11 +200,14 @@ async function loadProfileAvatar(){
     if(liff.isLoggedIn()){
       const p=await liff.getProfile();
       if(p?.pictureUrl) document.getElementById('avatar').src=p.pictureUrl;
+      if(p?.displayName){ document.getElementById('prof-name').textContent=p.displayName; document.getElementById('prof-status').textContent='เข้าสู่ระบบแล้ว'; }
       document.getElementById('loginBadge').classList.remove('show');
     } else {
+      document.getElementById('prof-status').textContent='ยังไม่เข้าสู่ระบบ';
       document.getElementById('loginBadge').classList.add('show');
     }
   }catch(e){
+    document.getElementById('prof-status').textContent='ยังไม่เข้าสู่ระบบ';
     document.getElementById('loginBadge').classList.add('show');
   }
 }
@@ -306,14 +264,9 @@ async function shareAllStars(){
   await liff.shareTargetPicker([flex]); liff.closeWindow&&liff.closeWindow();
 }
 
-// =================== PDF (with School Name) ===================
-async function ensureSettings(){
-  if (!CURRENT_SETTINGS || !Object.keys(CURRENT_SETTINGS).length) {
-    try { const { settings } = await initSupabaseFinal(); CURRENT_SETTINGS = settings || {}; } catch(e) {}
-  }
-}
+// =================== PDF ===================
 function buildPDFShell(title){
-  const school = (CURRENT_SETTINGS && CURRENT_SETTINGS['school_name']) ? CURRENT_SETTINGS['school_name'] : 'โรงเรียนของเรา';
+  const school='โรงเรียนของเรา';
   const wrap=document.createElement('div');
   const header=document.createElement('div'); header.className='header';
   const img=document.createElement('img'); img.src='./assets/crest.svg'; img.alt=school;
@@ -360,12 +313,12 @@ function buildPDFTable(headers, rows){
   table.appendChild(tbody); return table;
 }
 async function exportPDF(which){
-  await ensureSettings();
   let title='', headers=[], rows=[];
-  if(which==='amount'){ title='รายงาน TOP 10 ยอดเงินสูง • ฝาก ≥ ค่าเฉลี่ย'; headers=headersOf(TOP_AMOUNT); rows=TOP_AMOUNT; }
-  if(which==='frequent'){ title='รายงาน TOP 10 บัญชีฝากถี่มาก'; headers=headersOf(TOP_FREQ); rows=TOP_FREQ; }
-  if(which==='depositonly'){ title='รายงาน TOP 10 ไม่เคยถอน • ฝาก ≥ ค่าเฉลี่ย'; headers=headersOf(TOP_DEP); rows=TOP_DEP; }
+  if(which==='amount'){ title='รายงาน TOP 10 ยอดเงินสูง • ฝาก ≥ ค่าเฉลี่ย'; rows=TOP_AMOUNT; }
+  if(which==='frequent'){ title='รายงาน TOP 10 บัญชีฝากถี่มาก'; rows=TOP_FREQ; }
+  if(which==='depositonly'){ title='รายงาน TOP 10 ไม่เคยถอน • ฝาก ≥ ค่าเฉลี่ย'; rows=TOP_DEP; }
   if(!rows.length){ return alert('ไม่มีข้อมูลสำหรับรายงาน'); }
+  headers=headersOf(rows);
   const wrap=buildPDFShell(title); wrap.appendChild(buildPDFTable(headers, rows));
   addSignatureBlock(wrap); await renderPDF(wrap, `WDBank-${which}-${new Date().toISOString().slice(0,10)}.pdf`);
 }
@@ -377,13 +330,8 @@ function addSignatureBlock(wrap){
 }
 function parseDateRangeFilter(kind){
   const now=new Date(); let start,end;
-  if(kind==='week'){
-    start=new Date(now); const day=(now.getDay()+6)%7; start.setDate(now.getDate()-day); start.setHours(0,0,0,0);
-    end=new Date(start); end.setDate(start.getDate()+7);
-  } else if(kind==='month'){
-    start=new Date(now.getFullYear(), now.getMonth(), 1, 0,0,0,0);
-    end=new Date(now.getFullYear(), now.getMonth()+1, 1, 0,0,0,0);
-  }
+  if(kind==='week'){ start=new Date(now); const day=(now.getDay()+6)%7; start.setDate(now.getDate()-day); start.setHours(0,0,0,0); end=new Date(start); end.setDate(start.getDate()+7); }
+  else if(kind==='month'){ start=new Date(now.getFullYear(), now.getMonth(), 1, 0,0,0,0); end=new Date(now.getFullYear(), now.getMonth()+1, 1, 0,0,0,0); }
   return {start,end};
 }
 function inRange(d,start,end){ return d && d>=start && d<end; }
@@ -406,7 +354,6 @@ function buildTxInsightsRange(start,end){
   const div=document.createElement('div'); div.className='insight'; div.innerHTML=`<strong>สรุปช่วงเวลา</strong><br>${text.replace(/\\n/g,'<br>')}`; return {node:div};
 }
 async function exportSummaryPDF(kind){
-  await ensureSettings();
   const {start,end}=parseDateRangeFilter(kind);
   const wrap=buildPDFShell(kind==='week'?'สรุปรายสัปดาห์':'สรุปรายเดือน');
   const insight=buildTxInsightsRange(start,end); if(insight.node) wrap.appendChild(insight.node);
@@ -452,12 +399,10 @@ function buildClassBalanceSummary(){
   table.appendChild(thead); table.appendChild(tbody); return table;
 }
 async function exportClassBalancePDF(){
-  await ensureSettings();
   const wrap=buildPDFShell('ยอดคงเหลือรวมรายชั้น'); wrap.appendChild(buildClassBalanceSummary());
   addSignatureBlock(wrap); await renderPDF(wrap, `WDBank-class-balance-${new Date().toISOString().slice(0,10)}.pdf`);
 }
 async function exportSavingsPDF(){
-  await ensureSettings();
   const rows=Array.isArray(AC)? AC:[];
   const filtered=rows.filter(r=>String(r['ออมสิน']||'').toUpperCase()==='TRUE');
   if(!filtered.length){ return alert('ไม่มีบัญชีที่เป็นออมสิน (TRUE)'); }
@@ -485,12 +430,8 @@ async function exportSavingsPDF(){
   addSignatureBlock(wrap); await renderPDF(wrap, `WDBank-savings-gsb-${new Date().toISOString().slice(0,10)}.pdf`);
 }
 
-// =================== Events ===================
-document.addEventListener('DOMContentLoaded', ()=>{
-  document.getElementById('todayThai').textContent=thaiDateString();
-  loadAll();
-  loadProfileAvatar();
-
+// =================== Events & Nav ===================
+function setupTabs(){
   document.querySelectorAll('.tab').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
@@ -499,12 +440,42 @@ document.addEventListener('DOMContentLoaded', ()=>{
       document.getElementById('panel-'+btn.dataset.tab).classList.add('show');
     });
   });
+}
+function switchView(view){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('show'));
+  document.getElementById('view-'+view).classList.add('show');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active', b.dataset.view===view));
+}
+function setupBottomNav(){
+  document.querySelectorAll('.nav-btn').forEach(b=>{
+    b.addEventListener('click', ()=>switchView(b.dataset.view));
+  });
+}
+function setupReportHub(){
+  document.getElementById('hub-week').addEventListener('click', ()=>exportSummaryPDF('week'));
+  document.getElementById('hub-month').addEventListener('click', ()=>exportSummaryPDF('month'));
+  document.getElementById('hub-classsum').addEventListener('click', exportClassBalancePDF);
+  document.getElementById('hub-savings').addEventListener('click', exportSavingsPDF);
+  document.getElementById('hub-amount').addEventListener('click', ()=>exportPDF('amount'));
+  document.getElementById('hub-frequent').addEventListener('click', ()=>exportPDF('frequent'));
+  document.getElementById('hub-depositonly').addEventListener('click', ()=>exportPDF('depositonly'));
+}
+function setupShareQuick(){
+  document.getElementById('share-amount-quick').addEventListener('click', shareAmount);
+  document.getElementById('share-frequent-quick').addEventListener('click', shareFrequent);
+  document.getElementById('share-depositonly-quick').addEventListener('click', shareDepositOnly);
+  document.getElementById('share-allstars-quick').addEventListener('click', shareAllStars);
+}
 
+document.addEventListener('DOMContentLoaded', ()=>{
+  loadAll(); loadProfileAvatar();
+  setupTabs(); setupBottomNav(); setupReportHub(); setupShareQuick();
+
+  // Top buttons
   document.getElementById('share-amount').addEventListener('click', shareAmount);
   document.getElementById('share-frequent').addEventListener('click', shareFrequent);
   document.getElementById('share-depositonly').addEventListener('click', shareDepositOnly);
   document.getElementById('share-allstars').addEventListener('click', shareAllStars);
-
   document.getElementById('pdf-amount').addEventListener('click', ()=>exportPDF('amount'));
   document.getElementById('pdf-frequent').addEventListener('click', ()=>exportPDF('frequent'));
   document.getElementById('pdf-depositonly').addEventListener('click', ()=>exportPDF('depositonly'));
@@ -514,4 +485,4 @@ document.addEventListener('DOMContentLoaded', ()=>{
   document.getElementById('pdf-savings').addEventListener('click', exportSavingsPDF);
 });
 
-console.log('WDBank v6.2 loaded');
+console.log('WDBank v6.3.1 loaded');
