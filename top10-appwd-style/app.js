@@ -4,7 +4,7 @@ const LIFF_ID = '2005230346-2OVa774O'; // เปลี่ยนเป็น LIFF
 const SHEET_AMOUNT      = 'https://opensheet.elk.sh/1EZtfvb0h9wYZbRFTGcm0KVPScnyu6B-boFG6aMpWEUo/Sortบัญชีเงินมากและฝากมากกว่าหรือเท่ากับค่าเฉลี่ย';
 const SHEET_FREQUENT    = 'https://opensheet.elk.sh/1EZtfvb0h9wYZbRFTGcm0KVPScnyu6B-boFG6aMpWEUo/Sortบัญชีฝากถี่มาก';
 const SHEET_DEPOSITONLY = 'https://opensheet.elk.sh/1EZtfvb0h9wYZbRFTGcm0KVPScnyu6B-boFG6aMpWEUo/Sortบัญชีไม่ถอนและฝากมากกว่าหรือเท่ากับค่าเฉลี่ย';
-const SHEET_TX          = 'https://opensheet.elk.sh/1EZtfvb0h9wYZbRFTGcm0KVPScnyu6B-boFG6aMpWEUo/Sortรายการฝากและถอน';
+window.SHEET_TX = window.SHEET_TX || 'https://opensheet.elk.sh/1EZtfvb0h9wYZbRFTGcm0KVPScnyu6B-boFG6aMpWEUo/Sortรายการฝากและถอน';
 const SHEET_ACCOUNTS    = 'https://opensheet.elk.sh/1EZtfvb0h9wYZbRFTGcm0KVPScnyu6B-boFG6aMpWEUo//บัญชี';
 
 // =================== State & Utils ===================
@@ -423,12 +423,12 @@ document.addEventListener('DOMContentLoaded', ()=>{
   ensureTX().then(()=>{ try{ computeMonthlyDeltaCard(); }catch(e){} });
 });
 // ==== v6.6.2: Ensure TX is loaded from opensheet (deposits source) ====
-const SHEET_TX = "https://opensheet.elk.sh/1EZtfvb0h9wYZbRFTGcm0KVPScnyu6B-boFG6aMpWEUo/Sortรายการฝากและถอน";
+window.SHEET_TX = window.SHEET_TX || "https://opensheet.elk.sh/1EZtfvb0h9wYZbRFTGcm0KVPScnyu6B-boFG6aMpWEUo/Sortรายการฝากและถอน";
 
 async function ensureTX(){
   try{
     if (Array.isArray(window.TX) && window.TX.length) return window.TX;
-    const res = await fetch(SHEET_TX, { cache: "no-store" });
+    const res = await fetch(window.SHEET_TX, { cache: "no-store" });
     const data = await res.json();
     // Data comes latest-first; we don't rely on order. Keep all rows.
     window.TX = Array.isArray(data)? data : [];
