@@ -144,7 +144,31 @@ function scopeLabelTH(scope){
   return '';
 }
 function latestTermFromTX(){ var terms = Array.from(new Set((TX||[]).map(r=>String(r['ปีการศึกษา']||'').trim()).filter(Boolean))); if(!terms.length) return null; var parsed = terms.map(function(s){ var prt=s.split('/'); return {s:s, t:parseInt(prt[0]||'0',10), y:parseInt(prt[1]||'0',10)}; }); parsed=parsed.filter(x=>!isNaN(x.t)&&!isNaN(x.y)); parsed.sort(function(a,b){ if(a.y!==b.y) return b.y-a.y; return b.t-a.t; }); return parsed.length? parsed[0].s : null; }
-function getRangeByScope(scope){ if(scope==='term'){ var t=latestTermFromTX(); return {type:'term',value:t}; } var now=new Date(); if(scope==='week'){ var start=new Date(now); var day=(now.getDay()+6)%7; start.setDate(now.getDate()-day); start.setHours(0,0,0,0); var end=new Date(start); end.setDate(start.getDate()+7); return {type:'range',start:start,end:end}; } var startM=new Date(now.getFullYear(), now.getMonth(), 1, 0,0,0,0); var endM=new Date(now.getFullYear(), now.getMonth()+1, 1, 0,0,0,0); return {type:'range',start:startM,end=endM}; }
+function getRangeByScope(scope) {
+  const now = new Date();
+
+  if (scope === 'term') {
+    const t = latestTermFromTX();
+    return { type: 'term', value: t };
+  }
+
+  if (scope === 'week') {
+    const start = new Date(now);
+    const day = (now.getDay() + 6) % 7; // จันทร์=0
+    start.setDate(now.getDate() - day);
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(start);
+    end.setDate(start.getDate() + 7);
+
+    return { type: 'range', start: start, end: end };
+  }
+
+  const startM = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+  const endM   = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0, 0);
+
+  return { type: 'range', start: startM, end: endM };
+}
 function inRange(d,start,end){ return d && d>=start && d<end; }
 function inScopeTx(r,scopeObj){ if(scopeObj.type==='term'){ var term=String(r['ปีการศึกษา']||'').trim(); return term===scopeObj.value; } else { var d=parseThaiDate(r['วันที่']); return inRange(d, scopeObj.start, scopeObj.end); } }
 
