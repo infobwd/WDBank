@@ -13,10 +13,6 @@
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <link rel="stylesheet" href="./styles.css">
-
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-
 </head>
 <body>
   <header class="appbar">
@@ -256,7 +252,7 @@
 
 
 <!-- PATCH: Teacher Mode -->
-<section id="view-teacher" class="view" style="display:none" style="display:none;">
+<section id="view-teacher" class="view" style="display:none;">
   <section class="card">
     <div class="section-head">
       <div class="title"><i class="fa-solid fa-chalkboard-user"></i> โหมดครู • ความก้าวหน้ารายห้อง (เดือนนี้)</div>
@@ -284,7 +280,8 @@
     <button class="nav-btn" data-view="reports"><i class="fa-solid fa-chart-pie"></i><span>รายงาน</span></button>
     <button class="nav-btn" data-view="share"><i class="fa-brands fa-line"></i><span>แชร์</span></button>
     <button class="nav-btn" data-view="profile"><i class="fa-solid fa-user"></i><span>โปรไฟล์</span></button>
-  </nav>
+  <button class="nav-btn" data-view="teacher"><i class="fa-solid fa-chalkboard-user"></i><span>ครู</span></button>
+</nav>
 
   <div id="pdfReport" class="pdf-report" aria-hidden="true"></div>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
