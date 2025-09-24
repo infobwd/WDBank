@@ -185,7 +185,7 @@ function buildCharts(scope){ var scopeObj=getRangeByScope(scope); var byClass=ne
 }
 
 // PDF helpers (same as v6.4.1)
-function buildPDFShell(title){ const school='โรงเรียนบ้านวังด้ง'; const wrap=document.createElement('div'); const header=document.createElement('div'); header.className='header'; const img=document.createElement('img'); img.src='./assets/crest.svg'; img.alt=school; const headBox=document.createElement('div'); const h1=document.createElement('h1'); h1.textContent=title; const h2=document.createElement('div'); h2.style.fontSize='14px'; h2.style.color='#334155'; h2.style.fontWeight='700'; h2.textContent=school; headBox.appendChild(h1); headBox.appendChild(h2); header.appendChild(img); header.appendChild(headBox); wrap.appendChild(header); const meta=document.createElement('div'); meta.className='meta'; meta.textContent = school+' • ออมก่อนใช้ • วันที่ '+thaiDateString(); wrap.appendChild(meta); return wrap; }
+function buildPDFShell(title){ const school='โรงเรียนของเรา'; const wrap=document.createElement('div'); const header=document.createElement('div'); header.className='header'; const img=document.createElement('img'); img.src='./assets/crest.svg'; img.alt=school; const headBox=document.createElement('div'); const h1=document.createElement('h1'); h1.textContent=title; const h2=document.createElement('div'); h2.style.fontSize='14px'; h2.style.color='#334155'; h2.style.fontWeight='700'; h2.textContent=school; headBox.appendChild(h1); headBox.appendChild(h2); header.appendChild(img); header.appendChild(headBox); wrap.appendChild(header); const meta=document.createElement('div'); meta.className='meta'; meta.textContent = school+' • ออมก่อนใช้ • วันที่ '+thaiDateString(); wrap.appendChild(meta); return wrap; }
 async function renderPDF(node, filename){ const report=document.getElementById('pdfReport'); report.innerHTML=''; report.appendChild(node); const canvas=await html2canvas(report,{scale:2, backgroundColor:'#ffffff'}); const imgData=canvas.toDataURL('image/png'); const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'p', unit:'pt', format:'a4'}); const pageWidth=pdf.internal.pageSize.getWidth(), pageHeight=pdf.internal.pageSize.getHeight(), margin=24; const imgWidth=pageWidth - margin*2; const imgHeight = canvas.height * imgWidth / canvas.width; if(imgHeight <= pageHeight - margin*2){ pdf.addImage(imgData,'PNG',margin,margin,imgWidth,imgHeight); } else{ let sH=0; const pageCanvas=document.createElement('canvas'); const ctx=pageCanvas.getContext('2d'); const ratio=imgWidth/canvas.width; const sliceHeightPx=(pageHeight - margin*2)/ratio; while(sH<canvas.height){ const slice=Math.min(sliceHeightPx, canvas.height - sH); pageCanvas.width=canvas.width; pageCanvas.height=slice; ctx.drawImage(canvas,0,sH,canvas.width,slice,0,0,canvas.width,slice); const sliceData=pageCanvas.toDataURL('image/png'); const sliceHpt=slice*ratio; pdf.addImage(sliceData,'PNG',margin,margin,imgWidth,sliceHpt); sH+=slice; if(sH<canvas.height) pdf.addPage(); } } pdf.save(filename); }
 function buildPDFTable(headers, rows){ const table=document.createElement('table'); const thead=document.createElement('thead'); const trh=document.createElement('tr'); headers.forEach(function(h){ const th=document.createElement('th'); th.textContent=h; trh.appendChild(th); }); thead.appendChild(trh); table.appendChild(thead); const tbody=document.createElement('tbody'); rows.forEach(function(r){ const tr=document.createElement('tr'); headers.forEach(function(h){ const td=document.createElement('td'); const v=r[h]; const text=isAccountHeader(h)? formatAccountMasked(v) : (isNumeric(v)? fmtNumber(v): String(v==null?'':v)); td.textContent=text; tr.appendChild(td); }); tbody.appendChild(tr); }); table.appendChild(tbody); return table; }
 async function exportPDF(which){ let title='', headers=[], rows=[]; if(which==='amount'){ title='รายงาน TOP 10 ยอดเงินสูง • ฝาก ≥ ค่าเฉลี่ย'; rows=TOP_AMOUNT; } if(which==='frequent'){ title='รายงาน TOP 10 บัญชีฝากถี่มาก'; rows=TOP_FREQ; } if(which==='depositonly'){ title='รายงาน TOP 10 ไม่เคยถอน • ฝาก ≥ ค่าเฉลี่ย'; rows=TOP_DEP; } if(!rows.length){ return alert('ไม่มีข้อมูลสำหรับรายงาน'); } headers=headersOf(rows); const wrap=buildPDFShell(title); wrap.appendChild(buildPDFTable(headers, rows)); addSignatureBlock(wrap); await renderPDF(wrap, 'WDBank-'+which+'-'+new Date().toISOString().slice(0,10)+'.pdf'); }
@@ -211,3 +211,175 @@ async function exportLeaderboardPDF(scope){ var titleMap={week:'ลีดเด�
 document.addEventListener('DOMContentLoaded', function(){ loadAll().then(()=>{ setupLeaderboard(); setupCharts(); setupLeaderboardPDFButtons(); }); loadProfileAvatar(); setupTabs(); setupBottomNav(); setupReportHub(); setupShareQuick(); });
 
 console.log('WDBank v6.4.2 loaded');
+
+
+
+// ==== PATCH HELPERS: Safe DOM & Utils ====
+if (typeof window.$id === 'undefined') {
+  window.$id = (id)=>document.getElementById(id);
+  window.setText = (id, t)=>{ const el=$id(id); if(el) el.textContent=t; };
+  window.setHTML = (id, h)=>{ const el=$id(id); if(el) el.innerHTML=h; };
+  window.setSrc = (id, u)=>{ const el=$id(id); if(el) el.src=u; };
+  window.thaiDateString = (d)=>{ if(!d) d=new Date(); return d.toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'}); };
+  window.parseThaiDate = (s)=>{ try{ s=String(s); const [datePart, timePart='00:00:00']=s.split(',').map(x=>x.trim()); const [dd,mm,yy]=datePart.split('/').map(n=>parseInt(n,10)); const [HH,MM,SS]=timePart.split(':').map(n=>parseInt(n,10)); const gy=(yy>2400? yy-543:yy); return new Date(gy, (mm||1)-1, dd||1, HH||0, MM||0, SS||0); }catch(e){ return null; } };
+  window.monthRange = (date)=>{ const s=new Date(date.getFullYear(), date.getMonth(), 1,0,0,0,0); const e=new Date(date.getFullYear(), date.getMonth()+1,1,0,0,0,0); return {start:s,end:e}; };
+  window.prevMonth = (date)=> new Date(date.getFullYear(), date.getMonth()-1, 1);
+  window.inRange = (d,s,e)=> d && d>=s && d<e;
+  window.toNumber = (v)=> Number(String(v??'').replace(/[, ]/g,''));
+  window.fmtNumber = (v)=>{ const n=toNumber(v); return isFinite(n)? n.toLocaleString('th-TH', {maximumFractionDigits:2}) : String(v??''); };
+  window.formatAccountMasked = (val)=>{ const raw=String(val??'').replace(/[ ,]/g,''); if(!raw) return '-'; return raw.slice(0,4)+' ••'; };
+}
+
+
+
+// ==== PATCH: Mini Tips ====
+if (typeof window.MINI_TIPS === 'undefined') {
+  window.MINI_TIPS = [
+    'ออมเล็ก ๆ แต่บ่อย ๆ ดีต่อวินัยมากกว่าครั้งละก้อนใหญ่ 💪',
+    'ตั้งเวลาออมประจำ เช่น จันทร์/พฤ. หลังเข้าแถว 5 นาที ⏰',
+    'ตั้งเป้าหมายสั้น ๆ รายสัปดาห์ จะเห็นความก้าวหน้าเร็วขึ้น ✨',
+    'ออมก่อนใช้: แยกเงินออมทันทีที่ได้รับเงิน 💼',
+    'ชวนเพื่อนทั้งห้องออมพร้อมกัน สนุกและมีแรงใจขึ้น 🤝'
+  ];
+}
+function setMiniTip(){ const el=$id('miniTip'); if(!el) return; const idx=Math.floor(Date.now()/86400000)%MINI_TIPS.length; el.textContent=MINI_TIPS[idx]; el.classList.remove('sk','sk-title'); }
+$id('btnNextTip')?.addEventListener('click', ()=>{ const el=$id('miniTip'); if(el) el.textContent = MINI_TIPS[Math.floor(Math.random()*MINI_TIPS.length)]; });
+
+
+
+// ==== PATCH: Monthly Delta Card ====
+function computeMonthlyDeltaCard(){
+  try{
+    const now=new Date(); const {start,end}=monthRange(now); const prev=monthRange(prevMonth(now));
+    const mapNow=new Map(), mapPrev=new Map();
+    const txArr = (typeof TX!=='undefined' && Array.isArray(TX))? TX : (window.TX||[]);
+    (txArr||[]).forEach(r=>{
+      const d=parseThaiDate(r['วันที่']); if(!d) return;
+      const acc=String(r['บัญชี']||r['รหัสนักเรียน']||'').trim(); if(!acc) return;
+      if(r['รายการ']==='ฝาก'){
+        if(inRange(d,start,end)) mapNow.set(acc,(mapNow.get(acc)||0)+1);
+        if(inRange(d,prev.start,prev.end)) mapPrev.set(acc,(mapPrev.get(acc)||0)+1);
+      }
+    });
+    const avgNow=[...mapNow.values()].reduce((a,b)=>a+b,0)/Math.max(mapNow.size,1);
+    const avgPrev=[...mapPrev.values()].reduce((a,b)=>a+b,0)/Math.max(mapPrev.size,1);
+    const pct=(avgPrev>0)? ((avgNow-avgPrev)/avgPrev*100):0;
+    setText('deltaPct',(pct>=0?'+':'')+pct.toFixed(0)+'%');
+    setText('avgThisMonth', isFinite(avgNow)? avgNow.toFixed(2):'-');
+    setText('avgBaseline',  isFinite(avgPrev)? avgPrev.toFixed(2):'—');
+    ['deltaPct','avgThisMonth','avgBaseline'].forEach(id=>$id(id)?.classList.remove('sk','sk-title'));
+  }catch(e){ console.warn('computeMonthlyDeltaCard error', e); }
+}
+
+
+
+// ==== PATCH: Teacher Mode (monthly) ====
+function monthDepositStatsByClass(){
+  const txArr = (typeof TX!=='undefined' && Array.isArray(TX))? TX : (window.TX||[]);
+  const acArr = (typeof AC!=='undefined' && Array.isArray(AC))? AC : (window.AC||[]);
+  if(!txArr) return [];
+  const now=new Date(); const {start,end}=monthRange(now);
+  const perClass=new Map();
+  (txArr||[]).forEach(r=>{
+    const d=parseThaiDate(r['วันที่']); if(!inRange(d,start,end)) return;
+    const act=String(r['รายการ']||''); if(act!=='ฝาก') return;
+    const acc=String(r['บัญชี']||r['รหัสนักเรียน']||'').trim(); if(!acc) return;
+    const cls=String(r['ชั้น']||r['ห้อง']||'ไม่ระบุ');
+    const amt=toNumber(r['จำนวนเงิน']);
+    const node=perClass.get(cls)||{acc:new Set(), depCountByAcc:new Map(), depSum:0};
+    node.acc.add(acc);
+    node.depCountByAcc.set(acc,(node.depCountByAcc.get(acc)||0)+1);
+    node.depSum += isFinite(amt)? amt : 0;
+    perClass.set(cls,node);
+  });
+  (acArr||[]).forEach(r=>{
+    const cls=String(r['ห้อง']||r['ชั้น']||'ไม่ระบุ');
+    const acc=String(r['รหัสนักเรียน']||r['บัญชี']||'').trim();
+    if(!acc) return;
+    const node=perClass.get(cls)||{acc:new Set(), depCountByAcc:new Map(), depSum:0};
+    node.acc.add(acc);
+    if(!node.depCountByAcc.has(acc)) node.depCountByAcc.set(acc,0);
+    perClass.set(cls,node);
+  });
+  const rows=[];
+  for(const [cls,node] of perClass.entries()){
+    const n=node.acc.size||1;
+    const sum=[...node.depCountByAcc.values()].reduce((a,b)=>a+b,0);
+    const avg=sum/n;
+    const pct4=([...node.depCountByAcc.values()].filter(v=>v>=4).length/n)*100;
+    rows.push({ชั้น:cls, จำนวนบัญชี:n, เฉลี่ยครั้งฝากต่อบัญชี:avg, เปอร์เซ็นต์ฝากอย่างน้อย4ครั้ง:pct4, รวมฝาก:node.depSum});
+  }
+  rows.sort((a,b)=>b.เปอร์เซ็นต์ฝากอย่างน้อย4ครั้ง - a.เปอร์เซ็นต์ฝากอย่างน้อย4ครั้ง);
+  return rows;
+}
+function buildTeacherSummary(){
+  const body=$id('teacher-body'); if(!body) return;
+  const rows=monthDepositStatsByClass();
+  body.innerHTML='';
+  if(!rows.length){ body.innerHTML='<tr><td colspan="5">ไม่พบข้อมูลเดือนนี้</td></tr>'; return; }
+  const sel=$id('classSelect'); if(sel) sel.innerHTML='';
+  rows.forEach(r=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML = '<td>'+r.ชั้น+'</td><td>'+fmtNumber(r.จำนวนบัญชี)+'</td><td>'+r.เฉลี่ยครั้งฝากต่อบัญชี.toFixed(2)+'</td><td>'+r.เปอร์เซ็นต์ฝากอย่างน้อย4ครั้ง.toFixed(0)+'%</td><td>'+fmtNumber(r.รวมฝาก)+'</td>';
+    body.appendChild(tr);
+    if(sel){ const opt=document.createElement('option'); opt.value=r.ชั้น; opt.textContent=r.ชั้น; sel.appendChild(opt); }
+  });
+}
+function flexWithOpenButton(bubble){
+  try{
+    if(typeof LIFF_ID==='string' && LIFF_ID){
+      const uri='https://liff.line.me/'+LIFF_ID;
+      bubble.footer={type:'box',layout:'vertical',spacing:'sm',contents:[{type:'button',style:'primary',action:{type:'uri',label:'เปิด WDBank (LIFF)',uri}}]};
+    }
+  }catch(e){}
+  return bubble;
+}
+async function shareClassToLine(){
+  try{ if(typeof liff!=='undefined'){ try{ await liff.init({liffId:LIFF_ID}); }catch(e){} if(!liff.isLoggedIn()){ await Swal.fire({title:'ต้องเข้าสู่ระบบ LINE',text:'เพื่อแชร์ผ่าน LINE',icon:'info',confirmButtonText:'เข้าสู่ระบบ'}); liff.login({redirectUri:location.href}); return; } } }catch(e){}
+  const cls=$id('classSelect')?.value||'-';
+  const rows=monthDepositStatsByClass().filter(r=>r.ชั้น===cls);
+  if(!rows.length){ return Swal.fire('ไม่พบข้อมูลห้องนี้ในเดือนนี้'); }
+  const r=rows[0];
+  const headers=['ชั้น','จำนวนบัญชี','เฉลี่ยฝาก/บัญชี','% ฝาก≥4ครั้ง','รวมฝาก'];
+  const headerBox={type:'box',layout:'horizontal',contents:headers.map(h=>({type:'text',text:h,size:'xs',weight:'bold',align:'center',flex:1}))};
+  const dataRow={type:'box',layout:'horizontal',backgroundColor:'#F5F6FA',contents:[
+    {type:'text',text:r.ชั้น,size:'xs',align:'center',flex:1},
+    {type:'text',text:String(r.จำนวนบัญชี),size:'xs',align:'center',flex:1},
+    {type:'text',text:r.เฉลี่ยครั้งฝากต่อบัญชี.toFixed(2),size:'xs',align:'center',flex:1},
+    {type:'text',text:r.เปอร์เซ็นต์ฝากอย่างน้อย4ครั้ง.toFixed(0)+'%',size:'xs',align:'center',flex:1},
+    {type:'text',text:fmtNumber(r.รวมฝาก),size:'xs',align:'center',flex:1}
+  ]};
+  const bubble={type:'bubble',size:'giga',body:{type:'box',layout:'vertical',contents:[
+    {type:'text',text:'WDBank • สรุปห้อง ('+cls+')',weight:'bold',size:'lg'},
+    {type:'text',text:'เดือนนี้ • '+thaiDateString(),color:'#7286D3',size:'sm'},
+    {type:'separator',margin:'md'}, headerBox, {type:'separator',margin:'sm'},
+    {type:'box',layout:'vertical',margin:'md',spacing:'sm',contents:[dataRow]}
+  ]}};
+  const flex={type:'flex',altText:'WDBank • สรุปห้อง '+cls,contents:flexWithOpenButton(bubble)};
+  try{ await liff.shareTargetPicker([flex]); if(liff.closeWindow) liff.closeWindow(); }catch(e){ console.warn('shareClassToLine error', e); }
+}
+
+
+
+// ==== PATCH: Bind & Init ====
+(function(){
+  const onReady = ()=>{
+    try{ setMiniTip(); }catch(e){}
+    try{ computeMonthlyDeltaCard(); }catch(e){}
+    try{ buildTeacherSummary(); }catch(e){}
+    $id('share-class')?.addEventListener('click', shareClassToLine);
+    // Add bottom-nav view switching if present
+    document.querySelectorAll('.nav-btn[data-view]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const view=btn.dataset.view;
+        if(!view) return;
+        document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active', b===btn));
+        document.querySelectorAll('.view').forEach(v=>v.classList.remove('show'));
+        const el=$id('view-'+view); if(el) el.classList.add('show');
+      });
+    });
+  };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', onReady, {once:true});
+  } else { onReady(); }
+})();
