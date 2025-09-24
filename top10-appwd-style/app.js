@@ -185,3 +185,59 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   $id('share-leaderboard')?.addEventListener('click', shareLeaderboard);
   $id('dl-reporthub-pdf')?.addEventListener('click', exportReportHubPDF);
 });
+
+
+// v6.7: optimize loops for latest-first TX
+function forEachTxInRangeLatestFirst(range, fn){
+  // Assumes TX is sorted with latest first (desc). We'll stop once date < range.start.
+  const arr = TX||[];
+  for(let i=0;i<arr.length;i++){
+    const r=arr[i]; const d=parseThaiDate(r['วันที่']); if(!d) continue;
+    if(d<range.start) break; // older than start → remaining are older too
+    if(d>=range.end) continue; // newer than end → skip but continue
+    fn(r, d);
+  }
+}
+
+// Override computeMonthlyDeltaCard to use optimized iterator (preserve behavior)
+let __deltaTry_v67=0;
+async function computeMonthlyDeltaCard_v67(){
+  if(!TX || TX.length===0){ if(__deltaTry_v67<20){ __deltaTry_v67++; return setTimeout(computeMonthlyDeltaCard_v67, 250); } else return; }
+  const now=new Date(); const mr=monthRange(now); const prev=monthRange(new Date(now.getFullYear(),now.getMonth()-1,1));
+  const mapNow=new Map(), mapPrev=new Map();
+  forEachTxInRangeLatestFirst(mr, (r)=>{ if(r['รายการ']==='ฝาก'){ const acc=String(r['บัญชี']||r['รหัสนักเรียน']||'').trim(); if(acc) mapNow.set(acc,(mapNow.get(acc)||0)+1); } });
+  forEachTxInRangeLatestFirst(prev, (r)=>{ if(r['รายการ']==='ฝาก'){ const acc=String(r['บัญชี']||r['รหัสนักเรียน']||'').trim(); if(acc) mapPrev.set(acc,(mapPrev.get(acc)||0)+1); } });
+  const avgNow = (mapNow.size? [...mapNow.values()].reduce((a,b)=>a+b,0)/mapNow.size : 0);
+  const avgPrev= (mapPrev.size? [...mapPrev.values()].reduce((a,b)=>a+b,0)/mapPrev.size : 0);
+  const pct=(avgPrev>0)? ((avgNow-avgPrev)/avgPrev*100): (avgNow>0? 100:0);
+  (function(id,t){const el=document.getElementById(id); if(el) el.textContent=t;})('deltaPct',(pct>=0?'+':'')+pct.toFixed(0)+'%');
+  (function(id,t){const el=document.getElementById(id); if(el) el.textContent=t;})('avgThisMonth', isFinite(avgNow)? avgNow.toFixed(2):'-');
+  (function(id,t){const el=document.getElementById(id); if(el) el.textContent=t;})('avgBaseline',  isFinite(avgPrev)? avgPrev.toFixed(2):'—');
+  ['deltaPct','avgThisMonth','avgBaseline'].forEach(id=>{ const el=document.getElementById(id); el && el.classList.remove('sk','sk-title'); });
+}
+
+// Replace previous call bindings to use v67 version (add a safe fallback)
+document.addEventListener('DOMContentLoaded', ()=>{ try{ computeMonthlyDeltaCard_v67(); }catch(e){ try{ computeMonthlyDeltaCard(); }catch(_){ } } });
+
+// Optimize leaderboard data and charts using latest-first short-circuit
+const _ld_old = leaderboardData;
+leaderboardData = function(mode){
+  let range;
+  if(mode==='week') range=weekRange(new Date());
+  else if(mode==='month') range=monthRange(new Date());
+  else range=currentTermRange();
+  const perAcc = new Map();
+  forEachTxInRangeLatestFirst(range, (r)=>{
+    const acc=String(r['บัญชี']||r['รหัสนักเรียน']||'').trim(); if(!acc) return;
+    const cls=String(r['ชั้น']||r['ห้อง']||'ไม่ระบุ');
+    const act=String(r['รายการ']||''); const amt=toNumber(r['จำนวนเงิน']);
+    const node=perAcc.get(acc)||{depCount:0,depSum:0,cls};
+    if(act==='ฝาก'){ node.depCount += 1; node.depSum += isFinite(amt)? amt:0; }
+    perAcc.set(acc,node);
+  });
+  const counts=[...perAcc.values()].map(v=>v.depCount).filter(v=>v>0);
+  const baseline=counts.length? counts.reduce((a,b)=>a+b,0)/counts.length : 0;
+  const rows=[...perAcc.entries()].map(([acc,info])=>({ acc, cls:info.cls, depCount:info.depCount, depSum:info.depSum, score: info.depCount + (info.depCount>=baseline?0.5:0)})).filter(r=>r.depCount>0);
+  rows.sort((a,b)=> b.score-a.score || b.depCount-a.depCount || b.depSum-a.depSum);
+  return {rows, baseline, range};
+};
