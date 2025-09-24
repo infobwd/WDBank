@@ -30,7 +30,30 @@
     </button>
   </header>
 
-  <main class="container pb-safe">
+  \1
+
+<!-- HOME CARDS: Mini Tips + Monthly Delta -->
+<section class="card">
+  <div class="section-head">
+    <div class="title"><i class="fa-solid fa-lightbulb"></i> เคล็ด(ไม่)ลับการออม</div>
+    <button id="btnNextTip" class="btn btn-ghost sm"><i class="fa-solid fa-rotate-right"></i> สุ่มใหม่</button>
+  </div>
+  <div id="miniTip" class="mini-tip sk sk-title">กำลังโหลดเคล็ดลับ…</div>
+</section>
+
+<section class="card">
+  <div class="section-head">
+    <div>
+      <div class="title">เดือนนี้ออมบ่อยกว่าค่าเฉลี่ยของโรงเรียน <span id="deltaPct" class="accent sk sk-title">+0%</span></div>
+      <div class="subtitle">คำนวณจากจำนวนครั้ง “ฝาก” ต่อบัญชี เทียบกับเดือนก่อน • อัปเดตจากรายงานธุรกรรม</div>
+    </div>
+  </div>
+  <div class="delta-wrap">
+    <div class="delta-box"><div class="delta-h">เฉลี่ยเดือนนี้</div><div id="avgThisMonth" class="delta-v sk sk-title">-</div></div>
+    <div class="delta-box"><div class="delta-h">ค่าเฉลี่ยอ้างอิง (เดือนก่อน)</div><div id="avgBaseline" class="delta-v sk sk-title">-</div></div>
+  </div>
+</section>
+
     <!-- Home -->
     <section id="view-home" class="view show">
       <section class="card">
@@ -40,7 +63,7 @@
             <div class="subtitle">วันที่ <span id="todayThai" class="sk sk-text"></span></div>
           </div>
           <div class="actions">
-            <!-- <button id="share-allstars" class="btn btn-line"><i class="fa-brands fa-line"></i> แชร์การ์ดนี้</button> -->
+            <button id="share-allstars" class="btn btn-line"><i class="fa-brands fa-line"></i> แชร์การ์ดนี้</button>
           </div>
         </div>
         <div id="allstars" class="allstars">
@@ -84,8 +107,8 @@
                 <div class="desc">บัญชีที่มีเงินคงเหลือสูงและจำนวนครั้งฝากไม่น้อยกว่าค่าเฉลี่ยของทั้งโรงเรียน</div>
               </div>
               <div class="actions wrap">
-                <!-- <button id="pdf-amount" class="btn btn-primary sm"><i class="fa-solid fa-file-pdf"></i> PDF</button>
-                <button id="share-amount" class="btn btn-line sm"><i class="fa-brands fa-line"></i> แชร์</button> -->
+                <button id="pdf-amount" class="btn btn-primary sm"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+                <button id="share-amount" class="btn btn-line sm"><i class="fa-brands fa-line"></i> แชร์</button>
               </div>
             </div>
             <div class="table-wrap">
@@ -102,8 +125,8 @@
                 <div class="desc">โฟกัสเฉพาะ “ความถี่ในการฝาก” โดยไม่ดูยอดเงินคงเหลือ</div>
               </div>
               <div class="actions wrap">
-                <!-- <button id="pdf-frequent" class="btn btn-primary sm"><i class="fa-solid fa-file-pdf"></i> PDF</button>
-                <button id="share-frequent" class="btn btn-line sm"><i class="fa-brands fa-line"></i> แชร์</button> -->
+                <button id="pdf-frequent" class="btn btn-primary sm"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+                <button id="share-frequent" class="btn btn-line sm"><i class="fa-brands fa-line"></i> แชร์</button>
               </div>
             </div>
             <div class="table-wrap">
@@ -120,8 +143,8 @@
                 <div class="desc">เหมาะยกย่องการออมระยะยาว ไม่พบรายการถอน และฝากบ่อยไม่น้อยกว่าค่าเฉลี่ย</div>
               </div>
               <div class="actions wrap">
-                <!-- <button id="pdf-depositonly" class="btn btn-primary sm"><i class="fa-solid fa-file-pdf"></i> PDF</button>
-                <button id="share-depositonly" class="btn btn-line sm"><i class="fa-brands fa-line"></i> แชร์</button> -->
+                <button id="pdf-depositonly" class="btn btn-primary sm"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+                <button id="share-depositonly" class="btn btn-line sm"><i class="fa-brands fa-line"></i> แชร์</button>
               </div>
             </div>
             <div class="table-wrap">

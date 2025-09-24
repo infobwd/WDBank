@@ -112,3 +112,30 @@ button{font-family:inherit}
   .btn{padding:.45rem .6rem; font-size:.9rem}
   .btn.sm{padding:.35rem .5rem; font-size:.82rem}
 }
+
+/* Skeleton shimmer */
+.sk{position:relative;overflow:hidden;background:#f1f5f9;border-radius:8px;min-height:18px}
+.sk::after{content:"";position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.6) 50%, rgba(255,255,255,0) 100%);animation:shimmer 1.2s infinite}
+.sk-title{min-height:20px}
+.sk-text{min-height:14px}
+@keyframes shimmer{100%{transform:translateX(100%)}}
+
+.mini-tip{font-size:1.05rem;font-weight:700;color:#0f172a}
+.delta-wrap{display:grid;grid-template-columns:repeat(2,1fr);gap:.8rem}
+.delta-box{border:1px dashed #cbd5e1;border-radius:12px;padding:.6rem .8rem;background:#fff}
+.delta-h{font-size:.85rem;color:#64748b}
+.delta-v{font-size:1.2rem;font-weight:800;color:#0f172a}
+.accent{color:#059669}
+
+.lb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.8rem}
+.lb-card{border:1px solid #e5e7eb;border-radius:14px;padding:.8rem;background:#fff;display:flex;gap:.6rem;align-items:center}
+.lb-rank{width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:#F1F5FF;color:#2563EB;font-weight:800}
+.lb-body{display:flex;flex-direction:column}
+.lb-name{font-weight:800;color:#0f172a}
+.lb-sub{color:#64748b;font-size:.85rem}
+.charts{display:grid;grid-template-columns:1fr;gap:1rem}
+@media(min-width:760px){ .charts{grid-template-columns:1fr 1fr} }
+
+.btn.sm{padding:.35rem .55rem;font-size:.86rem}
+.actions.wrap{display:flex;gap:.5rem;flex-wrap:wrap}
+
