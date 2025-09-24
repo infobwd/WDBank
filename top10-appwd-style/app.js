@@ -132,3 +132,17 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   // Leaderboard default: week
   renderLeaderboard('week'); setCharts('week'); markActive('[data-lb]','data-lb','week');
 });
+
+
+// Lazy render charts on entering Report view if canvases exist and not drawn yet
+let __charts_inited = false;
+function ensureCharts(mode){
+  const bar = $id('barOverall'), line=$id('lineTrend');
+  if(bar && line){
+    setCharts(mode||'week');
+    __charts_inited = true;
+  }
+}
+document.querySelector('[data-view="report"]')?.addEventListener('click', ()=>{
+  if(!__charts_inited) ensureCharts('week');
+});

@@ -73,27 +73,33 @@
         </div>
       </section>
 
-      <section class="card">
-        <div class="section-head">
-          <div class="title"><i class="fa-solid fa-chart-column"></i> Report Hub • ภาพรวมการฝากถอน</div>
-          <div class="actions wrap">
-            <button class="btn btn-ghost sm" data-rg="week">สัปดาห์นี้</button>
-            <button class="btn btn-ghost sm" data-rg="month">เดือนนี้</button>
-            <button class="btn btn-ghost sm" data-rg="term">เทอมนี้</button>
-            <button id="dl-reporthub-pdf" class="btn btn-ghost sm"><i class="fa-solid fa-file-pdf"></i> PDF</button>
-          </div>
-        </div>
-        <div class="charts">
-          <canvas id="barOverall" height="220"></canvas>
-          <canvas id="lineTrend" height="220"></canvas>
-        </div>
-      </section>
+      
     </section>
+
+<section id="view-report" class="view">
+  <section class="card">
+    <div class="section-head">
+      <div class="title"><i class="fa-solid fa-chart-column"></i> รายงาน • ภาพรวมการฝากถอน</div>
+      <div class="actions wrap">
+        <button class="btn btn-ghost sm" data-rg="week">สัปดาห์นี้</button>
+        <button class="btn btn-ghost sm" data-rg="month">เดือนนี้</button>
+        <button class="btn btn-ghost sm" data-rg="term">เทอมนี้</button>
+        <button id="dl-reporthub-pdf" class="btn btn-ghost sm"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+      </div>
+    </div>
+    <div class="charts">
+      <canvas id="barOverall" height="220"></canvas>
+      <canvas id="lineTrend" height="220"></canvas>
+    </div>
+  </section>
+</section>
+
   </main>
 
   <nav class="bottom-nav">
     <button class="nav-btn active" data-view="home"><i class="fa-solid fa-house"></i><span>หน้าหลัก</span></button>
     <button class="nav-btn" data-view="leaderboard"><i class="fa-solid fa-ranking-star"></i><span>ลีดเดอร์บอร์ด</span></button>
+      <button class="nav-btn" data-view="report"><i class="fa-solid fa-chart-column"></i><span>รายงาน</span></button>
   </nav>
 
   <script src="./app.js"></script>
