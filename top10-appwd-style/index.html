@@ -13,6 +13,10 @@
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <link rel="stylesheet" href="./styles.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
 </head>
 <body>
   <header class="appbar">
@@ -40,7 +44,7 @@
             <div class="subtitle">วันที่ <span id="todayThai" class="sk sk-text"></span></div>
           </div>
           <div class="actions">
-            <!-- <button id="share-allstars" class="btn btn-line"><i class="fa-brands fa-line"></i> แชร์การ์ดนี้</button> -->
+            <button id="share-allstars" class="btn btn-line"><i class="fa-brands fa-line"></i> แชร์การ์ดนี้</button>
           </div>
         </div>
         <div id="allstars" class="allstars">
@@ -84,8 +88,8 @@
                 <div class="desc">บัญชีที่มีเงินคงเหลือสูงและจำนวนครั้งฝากไม่น้อยกว่าค่าเฉลี่ยของทั้งโรงเรียน</div>
               </div>
               <div class="actions wrap">
-                <!-- <button id="pdf-amount" class="btn btn-primary sm"><i class="fa-solid fa-file-pdf"></i> PDF</button>
-                <button id="share-amount" class="btn btn-line sm"><i class="fa-brands fa-line"></i> แชร์</button> -->
+                <button id="pdf-amount" class="btn btn-primary sm"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+                <button id="share-amount" class="btn btn-line sm"><i class="fa-brands fa-line"></i> แชร์</button>
               </div>
             </div>
             <div class="table-wrap">
@@ -102,8 +106,8 @@
                 <div class="desc">โฟกัสเฉพาะ “ความถี่ในการฝาก” โดยไม่ดูยอดเงินคงเหลือ</div>
               </div>
               <div class="actions wrap">
-                <!-- <button id="pdf-frequent" class="btn btn-primary sm"><i class="fa-solid fa-file-pdf"></i> PDF</button>
-                <button id="share-frequent" class="btn btn-line sm"><i class="fa-brands fa-line"></i> แชร์</button> -->
+                <button id="pdf-frequent" class="btn btn-primary sm"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+                <button id="share-frequent" class="btn btn-line sm"><i class="fa-brands fa-line"></i> แชร์</button>
               </div>
             </div>
             <div class="table-wrap">
@@ -120,8 +124,8 @@
                 <div class="desc">เหมาะยกย่องการออมระยะยาว ไม่พบรายการถอน และฝากบ่อยไม่น้อยกว่าค่าเฉลี่ย</div>
               </div>
               <div class="actions wrap">
-                <!-- <button id="pdf-depositonly" class="btn btn-primary sm"><i class="fa-solid fa-file-pdf"></i> PDF</button>
-                <button id="share-depositonly" class="btn btn-line sm"><i class="fa-brands fa-line"></i> แชร์</button> -->
+                <button id="pdf-depositonly" class="btn btn-primary sm"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+                <button id="share-depositonly" class="btn btn-line sm"><i class="fa-brands fa-line"></i> แชร์</button>
               </div>
             </div>
             <div class="table-wrap">
@@ -227,7 +231,51 @@
         </div>
       </section>
     </section>
-  </main>
+  
+<!-- PATCH: Mini Tips + Monthly Delta -->
+<section class="card">
+  <div class="section-head">
+    <div class="title"><i class="fa-solid fa-lightbulb"></i> เคล็ด(ไม่)ลับการออม</div>
+    <button id="btnNextTip" class="btn btn-ghost sm"><i class="fa-solid fa-rotate-right"></i> สุ่มใหม่</button>
+  </div>
+  <div id="miniTip" class="mini-tip sk sk-title">กำลังโหลดเคล็ดลับ…</div>
+</section>
+
+<section class="card">
+  <div class="section-head">
+    <div>
+      <div class="title">เดือนนี้ออมบ่อยกว่าค่าเฉลี่ยของโรงเรียน <span id="deltaPct" class="accent sk sk-title">+0%</span></div>
+      <div class="subtitle">คำนวณจากจำนวนครั้ง “ฝาก” ต่อบัญชี เทียบกับเดือนก่อน</div>
+    </div>
+  </div>
+  <div class="delta-wrap">
+    <div class="delta-box"><div class="delta-h">เฉลี่ยเดือนนี้</div><div id="avgThisMonth" class="delta-v sk sk-title">-</div></div>
+    <div class="delta-box"><div class="delta-h">ค่าเฉลี่ยอ้างอิง</div><div id="avgBaseline" class="delta-v sk sk-title">-</div></div>
+  </div>
+</section>
+
+
+<!-- PATCH: Teacher Mode -->
+<section id="view-teacher" class="view" style="display:none" style="display:none;">
+  <section class="card">
+    <div class="section-head">
+      <div class="title"><i class="fa-solid fa-chalkboard-user"></i> โหมดครู • ความก้าวหน้ารายห้อง (เดือนนี้)</div>
+      <div class="actions wrap">
+        <select id="classSelect" class="btn btn-ghost sm"></select>
+        <button id="share-class" class="btn btn-line sm"><i class="fa-brands fa-line"></i> ส่งเข้า LINE กลุ่มห้อง</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>ชั้น</th><th>จำนวนบัญชี</th><th>เฉลี่ยครั้งฝาก/บัญชี</th><th>% ฝาก≥4ครั้ง</th><th>รวมฝาก</th></tr></thead>
+        <tbody id="teacher-body"><tr class="sk"><td class="sk sk-text" colspan="5">กำลังโหลด…</td></tr></tbody>
+      </table>
+    </div>
+    <div class="muted">* ปุ่มแชร์จะเปิด Share Target Picker เพื่อเลือกกลุ่มห้อง</div>
+  </section>
+</section>
+
+</main>
 
   <!-- Bottom Navbar -->
   <nav class="bottom-nav">

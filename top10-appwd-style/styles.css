@@ -112,3 +112,34 @@ button{font-family:inherit}
   .btn{padding:.45rem .6rem; font-size:.9rem}
   .btn.sm{padding:.35rem .5rem; font-size:.82rem}
 }
+
+/* PATCH: Mini Tips + Delta card + Teacher Mode */
+.mini-tip{font-size:1.05rem;font-weight:700;color:#0f172a}
+.delta-wrap{display:grid;grid-template-columns:repeat(2,1fr);gap:.8rem}
+.delta-box{border:1px dashed #cbd5e1;border-radius:12px;padding:.6rem .8rem;background:#fff}
+.delta-h{font-size:.85rem;color:#64748b}
+.delta-v{font-size:1.2rem;font-weight:800;color:#0f172a}
+.accent{color:#059669}
+.actions.wrap{display:flex;gap:.5rem;flex-wrap:wrap}
+.btn.sm{padding:.35rem .55rem;font-size:.86rem}
+.table-wrap{overflow:auto}
+.view{display:none}.view.show{display:block}
+
+/* Responsive buttons smaller on tiny screens */
+@media (max-width:420px){
+  .btn{padding:.45rem .6rem;font-size:.9rem}
+  .btn.sm{padding:.35rem .5rem;font-size:.82rem}
+}
+
+/* PATCH v6.6: Leaderboard + Report Hub */
+.lb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.8rem}
+.lb-card{border:1px solid #e5e7eb;border-radius:14px;padding:.8rem;background:#fff;display:flex;gap:.6rem;align-items:center}
+.lb-rank{width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:#F1F5FF;color:#2563EB;font-weight:800}
+.lb-body{display:flex;flex-direction:column}
+.lb-name{font-weight:800;color:#0f172a}
+.lb-sub{color:#64748b;font-size:.85rem}
+.charts{display:grid;grid-template-columns:1fr;gap:1rem}
+@media(min-width:760px){ .charts{grid-template-columns:1fr 1fr} }
+
+/* Avoid weird selector conflicts from extensions: keep simple IDs/classes only */
+
