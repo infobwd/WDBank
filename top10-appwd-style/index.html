@@ -227,51 +227,7 @@
         </div>
       </section>
     </section>
-  
-<!-- PATCH: Mini Tips + Monthly Delta -->
-<section class="card">
-  <div class="section-head">
-    <div class="title"><i class="fa-solid fa-lightbulb"></i> เคล็ด(ไม่)ลับการออม</div>
-    <button id="btnNextTip" class="btn btn-ghost sm"><i class="fa-solid fa-rotate-right"></i> สุ่มใหม่</button>
-  </div>
-  <div id="miniTip" class="mini-tip sk sk-title">กำลังโหลดเคล็ดลับ…</div>
-</section>
-
-<section class="card">
-  <div class="section-head">
-    <div>
-      <div class="title">เดือนนี้ออมบ่อยกว่าค่าเฉลี่ยของโรงเรียน <span id="deltaPct" class="accent sk sk-title">+0%</span></div>
-      <div class="subtitle">คำนวณจากจำนวนครั้ง “ฝาก” ต่อบัญชี เทียบกับเดือนก่อน</div>
-    </div>
-  </div>
-  <div class="delta-wrap">
-    <div class="delta-box"><div class="delta-h">เฉลี่ยเดือนนี้</div><div id="avgThisMonth" class="delta-v sk sk-title">-</div></div>
-    <div class="delta-box"><div class="delta-h">ค่าเฉลี่ยอ้างอิง</div><div id="avgBaseline" class="delta-v sk sk-title">-</div></div>
-  </div>
-</section>
-
-
-<!-- PATCH: Teacher Mode -->
-<section id="view-teacher" class="view" style="display:none;">
-  <section class="card">
-    <div class="section-head">
-      <div class="title"><i class="fa-solid fa-chalkboard-user"></i> โหมดครู • ความก้าวหน้ารายห้อง (เดือนนี้)</div>
-      <div class="actions wrap">
-        <select id="classSelect" class="btn btn-ghost sm"></select>
-        <button id="share-class" class="btn btn-line sm"><i class="fa-brands fa-line"></i> ส่งเข้า LINE กลุ่มห้อง</button>
-      </div>
-    </div>
-    <div class="table-wrap">
-      <table class="table">
-        <thead><tr><th>ชั้น</th><th>จำนวนบัญชี</th><th>เฉลี่ยครั้งฝาก/บัญชี</th><th>% ฝาก≥4ครั้ง</th><th>รวมฝาก</th></tr></thead>
-        <tbody id="teacher-body"><tr class="sk"><td class="sk sk-text" colspan="5">กำลังโหลด…</td></tr></tbody>
-      </table>
-    </div>
-    <div class="muted">* ปุ่มแชร์จะเปิด Share Target Picker เพื่อเลือกกลุ่มห้อง</div>
-  </section>
-</section>
-
-</main>
+  </main>
 
   <!-- Bottom Navbar -->
   <nav class="bottom-nav">
@@ -280,8 +236,7 @@
     <button class="nav-btn" data-view="reports"><i class="fa-solid fa-chart-pie"></i><span>รายงาน</span></button>
     <button class="nav-btn" data-view="share"><i class="fa-brands fa-line"></i><span>แชร์</span></button>
     <button class="nav-btn" data-view="profile"><i class="fa-solid fa-user"></i><span>โปรไฟล์</span></button>
-  <button class="nav-btn" data-view="teacher"><i class="fa-solid fa-chalkboard-user"></i><span>ครู</span></button>
-</nav>
+  </nav>
 
   <div id="pdfReport" class="pdf-report" aria-hidden="true"></div>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
