@@ -409,7 +409,7 @@ window.WB = window.WB || {};
       footer:{type:'box',layout:'vertical',spacing:'sm',contents:[{type:'button',style:'primary',action:{type:'uri',label:'เปิด WDBank (LIFF)',uri:'https://liff.line.me/'+LIFF_ID}}]}};
       try{ await liff.shareTargetPicker([{type:'flex',altText:'WDBank • ลีดเดอร์บอร์ด',contents:bubble}]); if(liff.closeWindow) liff.closeWindow(); }catch(e){ console.warn('shareLeaderboard error', e); }
     });
-    WB.renderLeaderboard('week'); WB.setCharts('week');
+    ensureTX().then(()=>{ WB.renderLeaderboard('week'); WB.setCharts('week'); });
     document.querySelector('[data-lb="week"]')?.classList.add('active');
     document.querySelector('[data-rg="week"]')?.classList.add('active');
   };
@@ -420,5 +420,22 @@ document.addEventListener('DOMContentLoaded', ()=>{ try{ window.WB?.bindLeaderbo
 
 document.addEventListener('DOMContentLoaded', ()=>{
   try{ setMiniTip(); }catch(e){}
-  try{ computeMonthlyDeltaCard(); }catch(e){}
+  ensureTX().then(()=>{ try{ computeMonthlyDeltaCard(); }catch(e){} });
 });
+// ==== v6.6.2: Ensure TX is loaded from opensheet (deposits source) ====
+const SHEET_TX = "https://opensheet.elk.sh/1EZtfvb0h9wYZbRFTGcm0KVPScnyu6B-boFG6aMpWEUo/Sortรายการฝากและถอน";
+
+async function ensureTX(){
+  try{
+    if (Array.isArray(window.TX) && window.TX.length) return window.TX;
+    const res = await fetch(SHEET_TX, { cache: "no-store" });
+    const data = await res.json();
+    // Data comes latest-first; we don't rely on order. Keep all rows.
+    window.TX = Array.isArray(data)? data : [];
+  }catch(e){
+    console.warn("ensureTX error", e);
+    window.TX = window.TX || [];
+  }
+  return window.TX;
+}
+
