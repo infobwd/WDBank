@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <title>WDBank — โหมดครู</title>
+  <title>WDBank — รายงานรวม</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -12,7 +12,6 @@
   <script src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
@@ -25,7 +24,6 @@
       </div>
     </div>
     <div class="spacer"></div>
-    <select id="classFilter" class="class-filter" aria-label="เลือกห้อง"></select>
     <div id="loginBadge" class="login-badge">ยังไม่เข้าสู่ระบบ</div>
     <button id="btnProfile" class="avatar-btn" aria-label="โปรไฟล์">
       <img id="avatar" src="./assets/avatar.svg" alt="avatar" />
@@ -162,15 +160,6 @@
           <button class="pill" data-scope="month">เดือนนี้</button>
           <button class="pill" data-scope="term">เทอมนี้</button>
         </div>
-        <div class="seg-pills" id="lb-mode">
-          <button class="pill active" data-mode="fair">แฟร์ (วินัย)</button>
-          <button class="pill" data-mode="net">ตามสุทธิ</button>
-        </div>
-        <div class="actions wrap" style="margin:.2rem 0 .6rem">
-          <button id="lb-class-share" class="btn btn-line sm"><i class="fa-brands fa-line"></i> แชร์ลีดเดอร์บอร์ดห้อง</button>
-          <button id="lb-class-pdf-week" class="btn btn-primary sm"><i class="fa-solid fa-file-pdf"></i> PDF เล่าเรื่อง (สัปดาห์นี้)</button>
-          <button id="lb-class-pdf-month" class="btn btn-primary sm"><i class="fa-solid fa-file-pdf"></i> PDF เล่าเรื่อง (เดือนนี้)</button>
-        </div>
         <div class="table-wrap">
           <table class="table" id="leader-table">
             <thead>
@@ -250,6 +239,7 @@
   </nav>
 
   <div id="pdfReport" class="pdf-report" aria-hidden="true"></div>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="./app.js"></script>
 </body>
 </html>
