@@ -188,19 +188,6 @@ function switchView(name){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('show'));
   const el = $id('view-'+name); if(el) el.classList.add('show');
 }
-});
-});
-
-renderLeaderboard(btn.getAttribute('data-lb'));
-    setCharts(btn.getAttribute('data-lb'));
-  });
-});
-document.querySelectorAll('[data-rg]').forEach(btn=>{
-  
-    document.querySelectorAll('[data-rg]').forEach(b=>b.classList.toggle('active', b===btn));
-    setCharts(btn.getAttribute('data-rg'));
-  });
-});
 on('share-leaderboard','click', shareLeaderboard);
 on('dl-reporthub-pdf','click', exportReportHubPDF);
 
