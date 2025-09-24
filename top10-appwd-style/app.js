@@ -67,7 +67,7 @@ function renderTable(headId, bodyId, rows){
 function getAccountKey(headers, row){ const accHeader=headers.find(isAccountHeader); const k = accHeader? row[accHeader] : Object.values(row)[0]; return String(k==null?'':k).trim(); }
 function renderAllStars(){
   const wrap=document.getElementById('allstars'); wrap.innerHTML='';
-  if(!(TOP_AMOUNT.length && TOP_FREQ.length && TOP_DEP.length)){ wrap.innerHTML='<div class="subtitle">ยังไม่พอสร้างการ์ดสรุป</div>'; return; }
+  if(!(TOP_AMOUNT.length && TOP_FREQ.length && TOP_DEP.length)){ wrap.innerHTML='<div class=\"subtitle\">ยังไม่พอสร้างการ์ดสรุป</div>'; return; }
   const A=new Map(TOP_AMOUNT.map(r=>[getAccountKey(headersOf(TOP_AMOUNT),r),r])); const B=new Map(TOP_FREQ.map(r=>[getAccountKey(headersOf(TOP_FREQ),r),r])); const C=new Map(TOP_DEP.map(r=>[getAccountKey(headersOf(TOP_DEP),r),r]));
   const keysA=Array.from(A.keys()); const intersection=keysA.filter(k=>B.has(k)&&C.has(k)).slice(0,3);
   const balanceH=headersOf(TOP_AMOUNT).find(isBalanceHeader)||headersOf(TOP_FREQ).find(isBalanceHeader)||headersOf(TOP_DEP).find(isBalanceHeader);
@@ -80,9 +80,9 @@ function renderAllStars(){
     const amountTxt=balanceH?(isNumeric(amtSrc)? fmtNumber(amtSrc): '-'):'-'; const countTxt=countH?(isNumeric(cntSrc)? fmtNumber(cntSrc): '-'):'-';
     const card=document.createElement('div'); card.className='star-card';
     card.innerHTML=[
-      '<div class="star-hdr">','<i class="fa-solid fa-trophy" style="color:#eab308"></i>','<div>','<div class="star-acc">'+formatAccountMasked(key)+'</div>','<div class="star-badges">',
-      '<span class="badge blue"><i class="fa-solid fa-baht-sign"></i> ยอดเงินสูง</span>','<span class="badge green"><i class="fa-solid fa-clock-rotate-left"></i> ฝากถี่</span>','<span class="badge purple"><i class="fa-solid fa-ban"></i> ไม่เคยถอน</span>',
-      '</div>','</div>','</div>','<div class="subtitle">ยอดคงเหลือโดยประมาณ: <strong>'+amountTxt+'</strong> บาท • จำนวนครั้งฝาก: <strong>'+countTxt+'</strong></div>','<div class="class-tag"><i class="fa-solid fa-school"></i> '+cls+'</div>'
+      '<div class=\"star-hdr\">','<i class=\"fa-solid fa-trophy\" style=\"color:#eab308\"></i>','<div>','<div class=\"star-acc\">'+formatAccountMasked(key)+'</div>','<div class=\"star-badges\">',
+      '<span class=\"badge blue\"><i class=\"fa-solid fa-baht-sign\"></i> ยอดเงินสูง</span>','<span class=\"badge green\"><i class=\"fa-solid fa-clock-rotate-left\"></i> ฝากถี่</span>','<span class=\"badge purple\"><i class=\"fa-solid fa-ban\"></i> ไม่เคยถอน</span>',
+      '</div>','</div>','</div>','<div class=\"subtitle\">ยอดคงเหลือโดยประมาณ: <strong>'+amountTxt+'</strong> บาท • จำนวนครั้งฝาก: <strong>'+countTxt+'</strong></div>','<div class=\"class-tag\"><i class=\"fa-solid fa-school\"></i> '+cls+'</div>'
     ].join('');
     wrap.appendChild(card);
   });
@@ -91,7 +91,7 @@ function renderLatest10(){
   const rows=(TX||[]).map(function(r){ const d=parseThaiDate(r['วันที่']); var obj={}; Object.keys(r).forEach(k=>obj[k]=r[k]); obj.__d=d; return obj; }).filter(r=>r.__d).sort((a,b)=>b.__d-a.__d).slice(0,10);
   const headers=['วันที่','บัญชี','รายการ','จำนวนเงิน','ชั้น']; const thead=document.getElementById('th-latest'); const tbody=document.getElementById('tb-latest'); thead.innerHTML=''; tbody.innerHTML='';
   headers.forEach(function(h){ const th=document.createElement('th'); th.textContent=h; thead.appendChild(th); });
-  rows.forEach(function(r){ const tr=document.createElement('tr'); const act=String(r['รายการ']||''); const badge='<span class="badge-act '+(act==='ฝาก'?'badge-dep':'badge-wdr')+'"><i class="fa-solid '+(act==='ฝาก'?'fa-arrow-down':'fa-arrow-up')+'"></i> '+act+'</span>';
+  rows.forEach(function(r){ const tr=document.createElement('tr'); const act=String(r['รายการ']||''); const badge='<span class=\"badge-act '+(act==='ฝาก'?'badge-dep':'badge-wdr')+'\"><i class=\"fa-solid '+(act==='ฝาก'?'fa-arrow-down':'fa-arrow-up')+'\"></i> '+act+'</span>';
     const cells=[ r['วันที่']||'', formatAccountMasked(r['บัญชี']||''), '', fmtNumber(r['จำนวนเงิน']||''), r['ชั้น']||r['ห้อง']||'' ];
     cells.forEach(function(v,i){ const td=document.createElement('td'); if(i===2){ td.innerHTML=badge; } else { td.textContent=String(v);} tr.appendChild(td); }); tbody.appendChild(tr); });
 }
@@ -161,7 +161,7 @@ function populateClassFilter(){
   const sel = document.getElementById('classFilter');
   if(!sel) return;
   const classes = uniqueClasses();
-  sel.innerHTML = '<option value="">ทั้งหมด</option>' + classes.map(c=>`<option value="${c}">${c}</option>`).join('');
+  sel.innerHTML = '<option value=\"\">ทั้งหมด</option>' + classes.map(c=>`<option value=\"${c}\">${c}</option>`).join('');
   sel.addEventListener('change', () => {
     CURRENT_CLASSROOM = sel.value;
     renderLeaderboard(currentLeaderScope(), currentLeaderMode());
@@ -244,7 +244,6 @@ function calcFairnessRows(scope, limit=10){
   const byAcc = groupTxByAccount(scopeObj);
   const weeksTotal = totalWeeksInScope(scopeObj);
   const schoolAvg = schoolAvgDepositPerAccount(scopeObj);
-
   const rows = byAcc.map(r=>{
     const weeklyPresence = Math.min(1, (r.weeks.size || 0) / weeksTotal);
     const seq = Array.from(r.weeks).sort();
@@ -264,63 +263,49 @@ function calcFairnessRows(scope, limit=10){
     const score = Math.min(100, Math.round((base+streak+balance)*10)/10);
     const net = (r.depAmt - r.wdrAmt);
     return {
-      'บัญชี': r.acc,
-      'ห้อง': r.cls || '-',
-      'คะแนนวินัย': score,
-      'ครั้งฝาก': r.depCount,
-      'สตรีค': best||0,
-      'รวมฝาก': r.depAmt,
-      'รวมถอน': r.wdrAmt,
-      'สุทธิ': net
+      "บัญชี": r.acc,
+      "ห้อง": r.cls || "-",
+      "คะแนนวินัย": score,
+      "ครั้งฝาก": r.depCount,
+      "สตรีค": best || 0,
+      "รวมฝาก": r.depAmt,
+      "รวมถอน": r.wdrAmt,
+      "สุทธิ": net
     };
-  }).sort((a,b)=> b['คะแนนวินัย'] - a['คะแนนวินัย']);
+  }).sort((a,b)=> b["คะแนนวินัย"] - a["คะแนนวินัย"]);
   return limit? rows.slice(0,limit): rows;
 }
 
-
 function renderLeaderboard(scope, mode){
   mode = mode || currentLeaderMode();
-  var body = document.getElementById('leader-body'); body.innerHTML='';
+  var body=document.getElementById('leader-body'); body.innerHTML='';
   updateAcademicLabel(scope);
   const thead = document.querySelector('#leader-table thead tr');
-
-  if(mode==='fair'){ /* ของเดิม OK (มีคีย์ไทยแต่เรา quote แล้วใน calcFairnessRows) */ 
-    const fair = calcFairnessRows(scope, 20).filter(r=>!CURRENT_CLASSROOM || r['ห้อง']===CURRENT_CLASSROOM);
-    if(!fair.length){ thead.innerHTML = '<th colspan="6">แฟร์ (วินัย)</th>'; body.innerHTML='<tr><td colspan="6">ไม่พบข้อมูล</td></tr>'; return; }
+  if(mode==='fair'){
+    const fair = calcFairnessRows(scope, 20).filter(r=>!CURRENT_CLASSROOM || r["ห้อง"]===CURRENT_CLASSROOM);
+    if(!fair.length){ thead.innerHTML = '<th colspan=\"6\">แฟร์ (วินัย)</th>'; body.innerHTML='<tr><td colspan=\"6\">ไม่พบข้อมูล</td></tr>'; return; }
     thead.innerHTML = ['อันดับ','บัญชี','ห้อง','คะแนนวินัย','ครั้งฝาก','สตรีค'].map(h=>`<th>${h}</th>`).join('');
     fair.forEach((r,i)=>{
       const tr=document.createElement('tr');
-      tr.innerHTML = `<td>${i+1}</td>
-        <td><span class="acc-pill">${formatAccountMasked(r['บัญชี'])}</span></td>
-        <td>${r['ห้อง']}</td>
-        <td>${fmtNumber(r['คะแนนวินัย'])}</td>
-        <td>${fmtNumber(r['ครั้งฝาก'])}</td>
-        <td>${fmtNumber(r['สตรีค'])}</td>`;
+      tr.innerHTML = `<td>${i+1}</td><td><span class=\"acc-pill\">${formatAccountMasked(r["บัญชี"])}</span></td><td>${r["ห้อง"]}</td><td>${fmtNumber(r["คะแนนวินัย"])}</td><td>${fmtNumber(r["ครั้งฝาก"])}</td><td>${fmtNumber(r["สตรีค"])}</td>`;
       body.appendChild(tr);
     });
     return;
   }
-
   // net mode (ตามสุทธิ)
   const headers=['ชั้น','ครั้งฝาก','ครั้งถอน','รวมฝาก','รวมถอน','สุทธิ'];
   thead.innerHTML = headers.map(h=>`<th>${h}</th>`).join('');
-  const rows = aggregateClass(scope);
-  if(!rows.length){ body.innerHTML='<tr><td colspan="6">ไม่พบข้อมูล</td></tr>'; return; }
+  const rows=aggregateClass(scope);
+  if(!rows.length){ body.innerHTML='<tr><td colspan=\"6\">ไม่พบข้อมูล</td></tr>'; return; }
   rows.forEach(function(r){
-    const tr=document.createElement('tr');
-    tr.innerHTML = `<td>${r['ชั้น']}</td>
-      <td>${fmtNumber(r['ครั้งฝาก'])}</td>
-      <td>${fmtNumber(r['ครั้งถอน'])}</td>
-      <td>${fmtNumber(r['รวมฝาก'])}</td>
-      <td>${fmtNumber(r['รวมถอน'])}</td>
-      <td>${fmtNumber(r['สุทธิ'])}</td>`;
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td>'+r["ชั้น"]+'</td><td>'+fmtNumber(r["ครั้งฝาก"])+'</td><td>'+fmtNumber(r["ครั้งถอน"])+'</td><td>'+fmtNumber(r["รวมฝาก"])+'</td><td>'+fmtNumber(r["รวมถอน"])+'</td><td>'+fmtNumber(r["สุทธิ"])+'</td>';
     body.appendChild(tr);
   });
 }
-
 function updateAcademicLabel(scope){ var el=document.getElementById('lb-academic'); var yr=latestTermFromTX(); el.textContent=yr? yr : '-'; }
 
-// Charts (still global, not per class for simplicity)
+// Charts
 let _barChart=null,_lineChart=null;
 function buildCharts(scope){ var scopeObj=getRangeByScope(scope); var byClass=new Map(); (TX||[]).forEach(function(r){ if(!inScopeTx(r,scopeObj)) return; var cls=String(r['ชั้น']||r['ห้อง']||'ไม่ระบุ'); var act=String(r['รายการ']||'').trim(); var amt=toNumber(r['จำนวนเงิน']); var obj=byClass.get(cls)||{dep:0,wdr:0}; if(act==='ฝาก') obj.dep+=isFinite(amt)?amt:0; else if(act==='ถอน') obj.wdr+=isFinite(amt)?amt:0; byClass.set(cls,obj); }); var labels=Array.from(byClass.keys()); var depArr=labels.map(l=>byClass.get(l).dep); var wdrArr=labels.map(l=>byClass.get(l).wdr); var pairs=labels.map((l,i)=>({l:l,sum:depArr[i]+wdrArr[i],dep:depArr[i],wdr:wdrArr[i]})); pairs.sort((a,b)=>b.sum-a.sum); pairs=pairs.slice(0,8); labels=pairs.map(p=>p.l); depArr=pairs.map(p=>p.dep); wdrArr=pairs.map(p=>p.wdr);
   var ctxB=document.getElementById('chartBar').getContext('2d'); if(_barChart){ _barChart.destroy(); } _barChart=new Chart(ctxB,{type:'bar',data:{labels:labels,datasets:[{label:'รวมฝาก',data:depArr},{label:'รวมถอน',data:wdrArr}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},scales:{x:{ticks:{maxRotation:0,autoSkip:true}}}}});
@@ -332,61 +317,56 @@ function buildPDFShell(title){ const school='โรงเรียนของ�
 async function renderPDF(node, filename){ const report=document.getElementById('pdfReport'); report.innerHTML=''; report.appendChild(node); const canvas=await html2canvas(report,{scale:2, backgroundColor:'#ffffff'}); const imgData=canvas.toDataURL('image/png'); const { jsPDF }=window.jspdf; const pdf=new jsPDF({orientation:'p', unit:'pt', format:'a4'}); const pageWidth=pdf.internal.pageSize.getWidth(), pageHeight=pdf.internal.pageSize.getHeight(), margin=24; const imgWidth=pageWidth - margin*2; const imgHeight = canvas.height * imgWidth / canvas.width; if(imgHeight <= pageHeight - margin*2){ pdf.addImage(imgData,'PNG',margin,margin,imgWidth,imgHeight); } else{ let sH=0; const pageCanvas=document.createElement('canvas'); const ctx=pageCanvas.getContext('2d'); const ratio=imgWidth/canvas.width; const sliceHeightPx=(pageHeight - margin*2)/ratio; while(sH<canvas.height){ const slice=Math.min(sliceHeightPx, canvas.height - sH); pageCanvas.width=canvas.width; pageCanvas.height=slice; ctx.drawImage(canvas,0,sH,canvas.width,slice,0,0,canvas.width,slice); const sliceData=pageCanvas.toDataURL('image/png'); const sliceHpt=slice*ratio; pdf.addImage(sliceData,'PNG',margin,margin,imgWidth,sliceHpt); sH+=slice; if(sH<canvas.height) pdf.addPage(); } } pdf.save(filename); }
 function buildPDFTable(headers, rows){ const table=document.createElement('table'); const thead=document.createElement('thead'); const trh=document.createElement('tr'); headers.forEach(function(h){ const th=document.createElement('th'); th.textContent=h; trh.appendChild(th); }); thead.appendChild(trh); table.appendChild(thead); const tbody=document.createElement('tbody'); rows.forEach(function(r){ const tr=document.createElement('tr'); headers.forEach(function(h){ const td=document.createElement('td'); const v=r[h]; const text=isAccountHeader(h)? formatAccountMasked(v) : (isNumeric(v)? fmtNumber(v): String(v==null?'':v)); td.textContent=text; tr.appendChild(td); }); tbody.appendChild(tr); }); table.appendChild(tbody); return table; }
 async function exportPDF(which){ let title='', headers=[], rows=[]; if(which==='amount'){ title='รายงาน TOP 10 ยอดเงินสูง • ฝาก ≥ ค่าเฉลี่ย'; rows=TOP_AMOUNT; } if(which==='frequent'){ title='รายงาน TOP 10 บัญชีฝากถี่มาก'; rows=TOP_FREQ; } if(which==='depositonly'){ title='รายงาน TOP 10 ไม่เคยถอน • ฝาก ≥ ค่าเฉลี่ย'; rows=TOP_DEP; } if(!rows.length){ return alert('ไม่มีข้อมูลสำหรับรายงาน'); } headers=headersOf(rows); const wrap=buildPDFShell(title); wrap.appendChild(buildPDFTable(headers, rows)); addSignatureBlock(wrap); await renderPDF(wrap, 'WDBank-'+which+'-'+new Date().toISOString().slice(0,10)+'.pdf'); }
-function addSignatureBlock(wrap){ const row=document.createElement('div'); row.className='sign-row'; const left=document.createElement('div'); left.className='sign'; left.innerHTML='<div class="line"></div><div>ผู้บริหารสถานศึกษา (ลงชื่อ)</div>'; const right=document.createElement('div'); right.className='sign'; right.innerHTML='<div class="line"></div><div>ผู้รับผิดชอบงานธนาคารโรงเรียน (ลงชื่อ)</div>'; row.appendChild(left); row.appendChild(right); wrap.appendChild(row); }
+function addSignatureBlock(wrap){ const row=document.createElement('div'); row.className='sign-row'; const left=document.createElement('div'); left.className='sign'; left.innerHTML='<div class=\"line\"></div><div>ผู้บริหารสถานศึกษา (ลงชื่อ)</div>'; const right=document.createElement('div'); right.className='sign'; right.innerHTML='<div class=\"line\"></div><div>ผู้รับผิดชอบงานธนาคารโรงเรียน (ลงชื่อ)</div>'; row.appendChild(left); row.appendChild(right); wrap.appendChild(row); }
 function parseDateRangeFilter(kind){ const now=new Date(); let start,end; if(kind==='week'){ start=new Date(now); const day=(now.getDay()+6)%7; start.setDate(now.getDate()-day); start.setHours(0,0,0,0); end=new Date(start); end.setDate(start.getDate()+7); } else if(kind==='month'){ start=new Date(now.getFullYear(), now.getMonth(), 1, 0,0,0,0); end=new Date(now.getFullYear(), now.getMonth()+1, 1, 0,0,0,0); } return {start:start,end:end}; }
 function buildTxInsightsRange(start,end){ let depCount=0,wdrCount=0,depAmt=0,wdrAmt=0; const classCount=new Map(); (TX||[]).forEach(function(r){ const d=parseThaiDate(r['วันที่']); if(!inRange(d,start,end)) return; const act=String(r['รายการ']||'').trim(); const amt=toNumber(r['จำนวนเงิน']); const cls=String(r['ชั้น']||r['ห้อง']||'ไม่ระบุ'); if(act==='ฝาก'){ depCount++; depAmt+=isFinite(amt)?amt:0; } else if(act==='ถอน'){ wdrCount++; wdrAmt+=isFinite(amt)?amt:0; } classCount.set(cls,(classCount.get(cls)||0)+1); }); let topClass='-',topClassCount=0; for(const [k,v] of classCount.entries()){ if(v>topClassCount){ topClass=k; topClassCount=v; } } const net=depAmt-wdrAmt; const text='ช่วงข้อมูล: '+thaiDateString(start)+' – '+thaiDateString(end)+'\n• ฝาก: '+depCount.toLocaleString('th-TH')+' ครั้ง (รวม '+fmtNumber(depAmt)+' บาท)\n• ถอน: '+wdrCount.toLocaleString('th-TH')+' ครั้ง (รวม '+fmtNumber(wdrAmt)+' บาท)\n• เงินไหลสุทธิ (ฝาก-ถอน): '+fmtNumber(net)+' บาท\n• ชั้นที่เคลื่อนไหวสูงสุด: '+topClass+' ('+topClassCount.toLocaleString('th-TH')+' ครั้ง)'; const div=document.createElement('div'); div.className='insight'; div.innerHTML='<strong>สรุปช่วงเวลา</strong><br>'+text.replace(/\n/g,'<br>'); return {node:div}; }
-async function exportSummaryPDF(kind){ const d=parseDateRangeFilter(kind); const start=d.start, end=d.end; const wrap=buildPDFShell(kind==='week'?'สรุปรายสัปดาห์':'สรุปรายเดือน'); const insight=buildTxInsightsRange(start,end); if(insight.node) wrap.appendChild(insight.node); const classAgg=new Map(); (TX||[]).forEach(function(r){ const dd=parseThaiDate(r['วันที่']); if(!inRange(dd,start,end)) return; const cls=String(r['ชั้น']||r['ห้อง']||'ไม่ระบุ'); const act=String(r['รายการ']||'').trim(); const amt=toNumber(r['จำนวนเงิน']); const obj=classAgg.get(cls)||{ฝาก:0,ถอน:0,ครั้งฝาก:0,ครั้งถอน:0}; if(act==='ฝาก'){ obj.ฝาก+=isFinite(amt)?amt:0; obj.ครั้งฝาก++; } else if(act==='ถอน'){ obj.ถอน+=isFinite(amt)?amt:0; obj.ครั้งถอน++; } classAgg.set(cls,obj); }); const table=document.createElement('table'); const thead=document.createElement('thead'); thead.innerHTML='<tr><th>ชั้น</th><th>ครั้งฝาก</th><th>ครั้งถอน</th><th>รวมฝาก</th><th>รวมถอน</th><th>สุทธิ</th></tr>'; const tbody=document.createElement('tbody'); for(const [cls,v] of classAgg.entries()){ const tr=document.createElement('tr'); tr.innerHTML='<td>'+cls+'</td><td>'+fmtNumber(v.ครั้งฝาก)+'</td><td>'+fmtNumber(v.ครั้งถอน)+'</td><td>'+fmtNumber(v.ฝาก)+'</td><td>'+fmtNumber(v.ถอน)+'</td><td>'+fmtNumber(v.ฝาก - v.ถอน)+'</td>'; tbody.appendChild(tr);} table.appendChild(thead); table.appendChild(tbody); wrap.appendChild(table); addSignatureBlock(wrap); await renderPDF(wrap, 'WDBank-summary-'+kind+'-'+new Date().toISOString().slice(0,10)+'.pdf'); }
-function buildClassBalanceSummary(){ const rows=Array.isArray(AC)? AC:[]; const result=new Map(); rows.forEach(function(r){ const cls=String(r['ห้อง']||r['ชั้น']||'ไม่ระบุ'); const dep=toNumber(r['ฝาก']); const wdr=toNumber(r['ถอน']); const bal=toNumber(r['จำนวนเงินคงเหลือ']); const depC=toNumber(r['จำนวนครั้งที่ฝาก']); const wdrC=toNumber(r['จำนวนครั้งที่ถอน']); const obj=result.get(cls)||{ฝาก:0,ถอน:0,คงเหลือ:0,ครั้งฝาก:0,ครั้งถอน:0,บัญชี:0}; obj.ฝาก+=isFinite(dep)?dep:0; obj.ถอน+=isFinite(wdr)?wdr:0; obj.คงเหลือ+=isFinite(bal)?bal:0; obj.ครั้งฝาก+=isFinite(depC)?depC:0; obj.ครั้งถอน+=isFinite(wdrC)?wdrC:0; obj.บัญชี+=1; result.set(cls,obj); }); const table=document.createElement('table'); const thead=document.createElement('thead'); thead.innerHTML='<tr><th>ชั้น</th><th>จำนวนบัญชี</th><th>รวมฝาก</th><th>รวมถอน</th><th>คงเหลือรวม</th><th>ครั้งฝาก</th><th>ครั้งถอน</th></tr>'; const tbody=document.createElement('tbody'); for(const [cls,v] of result.entries()){ const tr=document.createElement('tr'); tr.innerHTML='<td>'+cls+'</td><td>'+fmtNumber(v.บัญชี)+'</td><td>'+fmtNumber(v.ฝาก)+'</td><td>'+fmtNumber(v.ถอน)+'</td><td>'+fmtNumber(v.คงเหลือ)+'</td><td>'+fmtNumber(v.ครั้งฝาก)+'</td><td>'+fmtNumber(v.ครั้งถอน)+'</td>'; tbody.appendChild(tr);} table.appendChild(thead); table.appendChild(tbody); return table; }
+async function exportSummaryPDF(kind){ const d=parseDateRangeFilter(kind); const start=d.start, end=d.end; const wrap=buildPDFShell(kind==='week'?'สรุปรายสัปดาห์':'สรุปรายเดือน'); const insight=buildTxInsightsRange(start,end); if(insight.node) wrap.appendChild(insight.node); const classAgg=new Map(); (TX||[]).forEach(function(r){ const dd=parseThaiDate(r['วันที่']); if(!inRange(dd,start,end)) return; const cls=String(r['ชั้น']||r['ห้อง']||'ไม่ระบุ'); const act=String(r['รายการ']||'').trim(); const amt=toNumber(r['จำนวนเงิน']); const obj=classAgg.get(cls)||{'ฝาก':0,'ถอน':0,'ครั้งฝาก':0,'ครั้งถอน':0}; if(act==='ฝาก'){ obj['ฝาก']+=isFinite(amt)?amt:0; obj['ครั้งฝาก']++; } else if(act==='ถอน'){ obj['ถอน']+=isFinite(amt)?amt:0; obj['ครั้งถอน']++; } classAgg.set(cls,obj); }); const table=document.createElement('table'); const thead=document.createElement('thead'); thead.innerHTML='<tr><th>ชั้น</th><th>ครั้งฝาก</th><th>ครั้งถอน</th><th>รวมฝาก</th><th>รวมถอน</th><th>สุทธิ</th></tr>'; const tbody=document.createElement('tbody'); for(const [cls,v] of classAgg.entries()){ const tr=document.createElement('tr'); tr.innerHTML='<td>'+cls+'</td><td>'+fmtNumber(v['ครั้งฝาก'])+'</td><td>'+fmtNumber(v['ครั้งถอน'])+'</td><td>'+fmtNumber(v['ฝาก'])+'</td><td>'+fmtNumber(v['ถอน'])+'</td><td>'+fmtNumber(v['ฝาก'] - v['ถอน'])+'</td>'; tbody.appendChild(tr);} table.appendChild(thead); table.appendChild(tbody); wrap.appendChild(table); addSignatureBlock(wrap); await renderPDF(wrap, 'WDBank-summary-'+kind+'-'+new Date().toISOString().slice(0,10)+'.pdf'); }
+function buildClassBalanceSummary(){ const rows=Array.isArray(AC)? AC:[]; const result=new Map(); rows.forEach(function(r){ const cls=String(r['ห้อง']||r['ชั้น']||'ไม่ระบุ'); const dep=toNumber(r['ฝาก']); const wdr=toNumber(r['ถอน']); const bal=toNumber(r['จำนวนเงินคงเหลือ']); const depC=toNumber(r['จำนวนครั้งที่ฝาก']); const wdrC=toNumber(r['จำนวนครั้งที่ถอน']); const obj=result.get(cls)||{'ฝาก':0,'ถอน':0,'คงเหลือ':0,'ครั้งฝาก':0,'ครั้งถอน':0,'บัญชี':0}; obj['ฝาก']+=isFinite(dep)?dep:0; obj['ถอน']+=isFinite(wdr)?wdr:0; obj['คงเหลือ']+=isFinite(bal)?bal:0; obj['ครั้งฝาก']+=isFinite(depC)?depC:0; obj['ครั้งถอน']+=isFinite(wdrC)?wdrC:0; obj['บัญชี']+=1; result.set(cls,obj); }); const table=document.createElement('table'); const thead=document.createElement('thead'); thead.innerHTML='<tr><th>ชั้น</th><th>จำนวนบัญชี</th><th>รวมฝาก</th><th>รวมถอน</th><th>คงเหลือรวม</th><th>ครั้งฝาก</th><th>ครั้งถอน</th></tr>'; const tbody=document.createElement('tbody'); for(const [cls,v] of result.entries()){ const tr=document.createElement('tr'); tr.innerHTML='<td>'+cls+'</td><td>'+fmtNumber(v['บัญชี'])+'</td><td>'+fmtNumber(v['ฝาก'])+'</td><td>'+fmtNumber(v['ถอน'])+'</td><td>'+fmtNumber(v['คงเหลือ'])+'</td><td>'+fmtNumber(v['ครั้งฝาก'])+'</td><td>'+fmtNumber(v['ครั้งถอน'])+'</td>'; tbody.appendChild(tr);} table.appendChild(thead); table.appendChild(tbody); return table; }
 async function exportClassBalancePDF(){ const wrap=buildPDFShell('ยอดคงเหลือรวมรายชั้น'); wrap.appendChild(buildClassBalanceSummary()); addSignatureBlock(wrap); await renderPDF(wrap, 'WDBank-class-balance-'+new Date().toISOString().slice(0,10)+'.pdf'); }
 async function exportSavingsPDF(){ const rows=Array.isArray(AC)? AC:[]; const filtered=rows.filter(r=>String(r['ออมสิน']||'').toUpperCase()==='TRUE'); if(!filtered.length){ return alert('ไม่มีบัญชีที่เป็นออมสิน (TRUE)'); } const wrap=buildPDFShell('บัญชีสำหรับนำฝากต่อธนาคารออมสิน'); let sumBal=0,sumDep=0,sumWdr=0,count=filtered.length; filtered.forEach(function(r){ sumBal+=isFinite(toNumber(r['จำนวนเงินคงเหลือ']))?toNumber(r['จำนวนเงินคงเหลือ']):0; sumDep+=isFinite(toNumber(r['ฝาก']))?toNumber(r['ฝาก']):0; sumWdr+=isFinite(toNumber(r['ถอน']))?toNumber(r['ถอน']):0; }); const info=document.createElement('div'); info.className='insight'; info.innerHTML='<strong>สรุป</strong><br>จำนวนนำส่ง: '+fmtNumber(count)+' บัญชี<br>รวมฝาก: '+fmtNumber(sumDep)+' บาท • รวมถอน: '+fmtNumber(sumWdr)+' บาท<br>คงเหลือรวม: '+fmtNumber(sumBal)+' บาท'; wrap.appendChild(info); const headers=['บัญชี','ห้อง','ฝาก','ถอน','จำนวนเงินคงเหลือ','สถานะบัญชี']; const rowsOut=filtered.map(function(r){ return {'บัญชี':formatAccountMasked(r['รหัสนักเรียน']||r['บัญชี']||''),'ห้อง':r['ห้อง']||r['ชั้น']||'','ฝาก':fmtNumber(r['ฝาก']),'ถอน':fmtNumber(r['ถอน']),'จำนวนเงินคงเหลือ':fmtNumber(r['จำนวนเงินคงเหลือ']),'สถานะบัญชี':r['สถานะบัญชี']||''}; }); wrap.appendChild(buildPDFTable(headers, rowsOut)); addSignatureBlock(wrap); await renderPDF(wrap, 'WDBank-savings-gsb-'+new Date().toISOString().slice(0,10)+'.pdf'); }
 
-// Leaderboard aggregate by class (net)
+// Leaderboard aggregate by class (net) — patched with quoted Thai keys
 function aggregateClass(scope){
-  var scopeObj = getRangeByScope(scope);
-  var agg = new Map();
+  var scopeObj=getRangeByScope(scope);
+  var agg=new Map();
   (TX||[]).forEach(function(r){
     if(!inScopeTx(r,scopeObj)) return;
-    var cls = String(r['ชั้น']||r['ห้อง']||'ไม่ระบุ');
-    var act = String(r['รายการ']||'').trim();
-    var amt = toNumber(r['จำนวนเงิน']);
-    var obj = agg.get(cls) || {depC:0, wdrC:0, dep:0, wdr:0};
-    if(act==='ฝาก'){ obj.depC++; obj.dep += isFinite(amt)?amt:0; }
-    else if(act==='ถอน'){ obj.wdrC++; obj.wdr += isFinite(amt)?amt:0; }
+    var cls=String(r['ชั้น']||r['ห้อง']||'ไม่ระบุ');
+    var act=String(r['รายการ']||'').trim();
+    var amt=toNumber(r['จำนวนเงิน']);
+    var obj=agg.get(cls)||{depC:0,wdrC:0,dep:0,wdr:0};
+    if(act==='ฝาก'){ obj.depC++; obj.dep+=isFinite(amt)?amt:0; }
+    else if(act==='ถอน'){ obj.wdrC++; obj.wdr+=isFinite(amt)?amt:0; }
     agg.set(cls,obj);
   });
-  var rows = [];
+  var rows=[];
   agg.forEach(function(v,k){
     rows.push({
-      'ชั้น': k,
-      'ครั้งฝาก': v.depC,
-      'ครั้งถอน': v.wdrC,
-      'รวมฝาก': v.dep,
-      'รวมถอน': v.wdr,
-      'สุทธิ': (v.dep - v.wdr)
+      "ชั้น": k,
+      "ครั้งฝาก": v.depC,
+      "ครั้งถอน": v.wdrC,
+      "รวมฝาก": v.dep,
+      "รวมถอน": v.wdr,
+      "สุทธิ": (v.dep - v.wdr)
     });
   });
-  rows.sort(function(a,b){ return b['สุทธิ'] - a['สุทธิ']; });
+  rows.sort(function(a,b){ return b["สุทธิ"] - a["สุทธิ"]; });
   return rows;
 }
 
-// Leaderboard PDF existing
+// Leaderboard PDF
 async function exportLeaderboardPDF(scope){
-  const titleMap = {
-    week:'ลีดเดอร์บอร์ดระดับชั้น • สัปดาห์นี้',
-    month:'ลีดเดอร์บอร์ดระดับชั้น • เดือนนี้',
-    term:'ลีดเดอร์บอร์ดระดับชั้น • เทอมนี้'
-  };
-  const rows = aggregateClass(scope);
+  var titleMap={week:'ลีดเดอร์บอร์ดระดับชั้น • สัปดาห์นี้', month:'ลีดเดอร์บอร์ดระดับชั้น • เดือนนี้', term:'ลีดเดอร์บอร์ดระดับชั้น • เทอมนี้'};
+  var rows=aggregateClass(scope);
   if(!(rows && rows.length)){ alert('ไม่มีข้อมูลสำหรับรายงาน'); return; }
-  const headers=['ชั้น','ครั้งฝาก','ครั้งถอน','รวมฝาก','รวมถอน','สุทธิ'];
-  // rows ที่ได้มามีคีย์ไทยอยู่แล้ว (ในรูปแบบใส่ "...")
-  const wrap = buildPDFShell(titleMap[scope]||'ลีดเดอร์บอร์ดระดับชั้น');
+  var headers=['ชั้น','ครั้งฝาก','ครั้งถอน','รวมฝาก','รวมถอน','สุทธิ'];
+  var wrap=buildPDFShell(titleMap[scope]||'ลีดเดอร์บอร์ดระดับชั้น');
   wrap.appendChild(buildPDFTable(headers, rows));
   addSignatureBlock(wrap);
   await renderPDF(wrap, 'WDBank-leaderboard-'+scope+'-'+new Date().toISOString().slice(0,10)+'.pdf');
 }
 
-// Narrative per class (PDF) + share
+// Class narrative (PDF) + share
 function buildClassNarrative(scope){
   const scopeObj = getRangeByScope(scope);
   const lbl = scopeLabelTH(scope);
@@ -404,8 +384,8 @@ function buildClassNarrative(scope){
   let withPresence=0; byStudent.forEach(s=>{ if(s.weeks.size>0) withPresence++; });
   const pctActive = byStudent.length? Math.round((withPresence/byStudent.length)*100):0;
   let topStreakAcc='-', topStreakWeeks=0;
-  calcFairnessRows(scope, 0).filter(r=>!CURRENT_CLASSROOM || r['ห้อง']===CURRENT_CLASSROOM).forEach(r=>{
-    if(r['สตรีค']>topStreakWeeks){ topStreakWeeks=r['สตรีค']; topStreakAcc=r['บัญชี']; }
+  calcFairnessRows(scope, 0).filter(r=>!CURRENT_CLASSROOM || r["ห้อง"]===CURRENT_CLASSROOM).forEach(r=>{
+    if(r["สตรีค"]>topStreakWeeks){ topStreakWeeks=r["สตรีค"]; topStreakAcc=r["บัญชี"]; }
   });
   const div=document.createElement('div');
   div.className='insight';
@@ -424,7 +404,7 @@ async function exportClassNarrativePDF(scope){
   const wrap = buildPDFShell(title);
   const block = buildClassNarrative(scope);
   if(block.node) wrap.appendChild(block.node);
-  const fair = calcFairnessRows(scope, 10).filter(r=>!CURRENT_CLASSROOM || r['ห้อง']===CURRENT_CLASSROOM);
+  const fair = calcFairnessRows(scope, 10).filter(r=>!CURRENT_CLASSROOM || r["ห้อง"]===CURRENT_CLASSROOM);
   if(fair.length){
     const headers = ['อันดับ','บัญชี','คะแนนวินัย','ครั้งฝาก','สตรีค'];
     const table=document.createElement('table');
@@ -433,7 +413,7 @@ async function exportClassNarrativePDF(scope){
     const tbody=document.createElement('tbody');
     fair.forEach((r,i)=>{
       const tr=document.createElement('tr');
-      tr.innerHTML = `<td>${i+1}</td><td>${formatAccountMasked(r['บัญชี'])}</td><td>${fmtNumber(r['คะแนนวินัย'])}</td><td>${fmtNumber(r['ครั้งฝาก'])}</td><td>${fmtNumber(r['สตรีค'])}</td>`;
+      tr.innerHTML = `<td>${i+1}</td><td>${formatAccountMasked(r["บัญชี"])}</td><td>${fmtNumber(r["คะแนนวินัย"])}</td><td>${fmtNumber(r["ครั้งฝาก"])}</td><td>${fmtNumber(r["สตรีค"])}</td>`;
       tbody.appendChild(tr);
     });
     table.appendChild(thead); table.appendChild(tbody);
@@ -453,12 +433,12 @@ async function shareLeaderboard(){
   var dataRows=rows.map(function(r,i){
     return {type:'box',layout:'horizontal',backgroundColor:(i%2?'#FFFFFF':'#F5F6FA'),
       contents:[
-        {type:'text',text:String(r.ชั้น),size:'xs',align:'center',flex:1},
-        {type:'text',text:String(r.ครั้งฝาก),size:'xs',align:'center',flex:1},
-        {type:'text',text:String(r.ครั้งถอน),size:'xs',align:'center',flex:1},
-        {type:'text',text:fmtNumber(r.รวมฝาก),size:'xs',align:'center',flex:1},
-        {type:'text',text:fmtNumber(r.รวมถอน),size:'xs',align:'center',flex:1},
-        {type:'text',text:fmtNumber(r.สุทธิ),size:'xs',align:'center',flex:1}
+        {type:'text',text:String(r["ชั้น"]),size:'xs',align:'center',flex:1},
+        {type:'text',text:String(r["ครั้งฝาก"]),size:'xs',align:'center',flex:1},
+        {type:'text',text:String(r["ครั้งถอน"]),size:'xs',align:'center',flex:1},
+        {type:'text',text:fmtNumber(r["รวมฝาก"]),size:'xs',align:'center',flex:1},
+        {type:'text',text:fmtNumber(r["รวมถอน"]),size:'xs',align:'center',flex:1},
+        {type:'text',text:fmtNumber(r["สุทธิ"]),size:'xs',align:'center',flex:1}
       ]};
   });
   var yr = latestTermFromTX();
@@ -477,7 +457,7 @@ async function shareClassLeaderboard(){
   await ensureLogin();
   const scope = currentLeaderScope();
   const cls = CURRENT_CLASSROOM || 'ทั้งหมด';
-  const rows = calcFairnessRows(scope, 10).filter(r=>!CURRENT_CLASSROOM || r['ห้อง']===CURRENT_CLASSROOM);
+  const rows = calcFairnessRows(scope, 10).filter(r=>!CURRENT_CLASSROOM || r["ห้อง"]===CURRENT_CLASSROOM);
   if(!rows.length) return Swal.fire('ไม่มีข้อมูลสำหรับแชร์');
   const headers=['อันดับ','บัญชี','คะแนนวินัย','ครั้งฝาก','สตรีค'];
   const headerBox={type:'box',layout:'horizontal',contents:headers.map(h=>({type:'text',text:h,size:'xs',weight:'bold',align:'center',flex:1}))};
@@ -485,10 +465,10 @@ async function shareClassLeaderboard(){
     type:'box',layout:'horizontal',backgroundColor:(i%2?'#FFFFFF':'#F5F6FA'),
     contents:[
       {type:'text',text:String(i+1),size:'xs',align:'center',flex:1},
-      {type:'text',text:cut(formatAccountMasked(r['บัญชี']),16),size:'xs',align:'center',flex:1},
-      {type:'text',text:String(r['คะแนนวินัย']),size:'xs',align:'center',flex:1},
-      {type:'text',text:String(r['ครั้งฝาก']),size:'xs',align:'center',flex:1},
-      {type:'text',text:String(r['สตรีค']),size:'xs',align:'center',flex:1},
+      {type:'text',text:cut(formatAccountMasked(r["บัญชี"]),16),size:'xs',align:'center',flex:1},
+      {type:'text',text:String(r["คะแนนวินัย"]),size:'xs',align:'center',flex:1},
+      {type:'text',text:String(r["ครั้งฝาก"]),size:'xs',align:'center',flex:1},
+      {type:'text',text:String(r["สตรีค"]),size:'xs',align:'center',flex:1},
     ]
   }));
   const yr = latestTermFromTX();
@@ -516,4 +496,4 @@ function setupCharts(){ buildCharts('week'); document.querySelectorAll('#chartSc
 
 document.addEventListener('DOMContentLoaded', function(){ loadAll(); loadProfileAvatar(); setupTabs(); setupBottomNav(); setupReportHub(); setupShareQuick(); setupLeaderboard(); });
 
-console.log('WDBank v6.5 teacher mode loaded');
+console.log('WDBank v6.5 teacher mode (patched) loaded');
