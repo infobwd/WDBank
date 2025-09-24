@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <title>WDBank — รายงานรวม</title>
+  <title>WDBank — โหมดครู (v6.6)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -12,7 +12,8 @@
   <script src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <link rel="stylesheet" href="./styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="./styles.css?v=66">
 </head>
 <body>
   <header class="appbar">
@@ -24,6 +25,7 @@
       </div>
     </div>
     <div class="spacer"></div>
+    <select id="classFilter" class="class-filter" aria-label="เลือกห้อง"></select>
     <div id="loginBadge" class="login-badge">ยังไม่เข้าสู่ระบบ</div>
     <button id="btnProfile" class="avatar-btn" aria-label="โปรไฟล์">
       <img id="avatar" src="./assets/avatar.svg" alt="avatar" />
@@ -31,7 +33,6 @@
   </header>
 
   <main class="container pb-safe">
-    <!-- Home -->
     <section id="view-home" class="view show">
       <section class="card">
         <div class="section-head">
@@ -141,7 +142,6 @@
       </section>
     </section>
 
-    <!-- Leaderboard -->
     <section id="view-leaderboard" class="view">
       <section class="card">
         <div class="section-head">
@@ -160,6 +160,15 @@
           <button class="pill" data-scope="month">เดือนนี้</button>
           <button class="pill" data-scope="term">เทอมนี้</button>
         </div>
+        <div class="seg-pills" id="lb-mode">
+          <button class="pill active" data-mode="fair">แฟร์ (วินัย)</button>
+          <button class="pill" data-mode="net">ตามสุทธิ</button>
+        </div>
+        <div class="actions wrap" style="margin:.2rem 0 .6rem">
+          <button id="lb-class-share" class="btn btn-line sm"><i class="fa-brands fa-line"></i> แชร์ลีดเดอร์บอร์ดห้อง</button>
+          <button id="lb-class-pdf-week" class="btn btn-primary sm"><i class="fa-solid fa-file-pdf"></i> PDF เล่าเรื่อง (สัปดาห์นี้)</button>
+          <button id="lb-class-pdf-month" class="btn btn-primary sm"><i class="fa-solid fa-file-pdf"></i> PDF เล่าเรื่อง (เดือนนี้)</button>
+        </div>
         <div class="table-wrap">
           <table class="table" id="leader-table">
             <thead>
@@ -175,7 +184,6 @@
       </section>
     </section>
 
-    <!-- Report Hub -->
     <section id="view-reports" class="view">
       <section class="card">
         <div class="section-head">
@@ -203,7 +211,6 @@
       </section>
     </section>
 
-    <!-- Share quick -->
     <section id="view-share" class="view">
       <section class="card">
         <div class="section-head"><div class="title"><i class="fa-brands fa-line"></i> แชร์ผ่าน LINE</div></div>
@@ -217,7 +224,6 @@
       </section>
     </section>
 
-    <!-- Profile -->
     <section id="view-profile" class="view">
       <section class="card">
         <div class="section-head"><div class="title"><i class="fa-solid fa-user"></i> โปรไฟล์</div></div>
@@ -229,7 +235,6 @@
     </section>
   </main>
 
-  <!-- Bottom Navbar -->
   <nav class="bottom-nav">
     <button class="nav-btn active" data-view="home"><i class="fa-solid fa-house"></i><span>หน้าหลัก</span></button>
     <button class="nav-btn" data-view="leaderboard"><i class="fa-solid fa-ranking-star"></i><span>ลีดเดอร์บอร์ด</span></button>
@@ -239,7 +244,6 @@
   </nav>
 
   <div id="pdfReport" class="pdf-report" aria-hidden="true"></div>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script src="./app.js"></script>
+  <script src="./app.js?v=66"></script>
 </body>
 </html>
