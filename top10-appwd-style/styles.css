@@ -130,3 +130,16 @@ button{font-family:inherit}
   .btn{padding:.45rem .6rem;font-size:.9rem}
   .btn.sm{padding:.35rem .5rem;font-size:.82rem}
 }
+
+/* PATCH v6.6: Leaderboard + Report Hub */
+.lb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.8rem}
+.lb-card{border:1px solid #e5e7eb;border-radius:14px;padding:.8rem;background:#fff;display:flex;gap:.6rem;align-items:center}
+.lb-rank{width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:#F1F5FF;color:#2563EB;font-weight:800}
+.lb-body{display:flex;flex-direction:column}
+.lb-name{font-weight:800;color:#0f172a}
+.lb-sub{color:#64748b;font-size:.85rem}
+.charts{display:grid;grid-template-columns:1fr;gap:1rem}
+@media(min-width:760px){ .charts{grid-template-columns:1fr 1fr} }
+
+/* Avoid weird selector conflicts from extensions: keep simple IDs/classes only */
+
