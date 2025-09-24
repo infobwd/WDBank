@@ -7,7 +7,7 @@
 html,body{height:100%}
 body{ margin:0; background:linear-gradient(180deg,var(--brandSoft) 0%, #fff 55%); color:var(--text);
   font-family:Kanit,system-ui,-apple-system,Segoe UI,Roboto,Arial,"Noto Sans Thai",sans-serif;}
-button{font-family:inherit}
+button,select{font-family:inherit}
 .appbar{position:sticky; top:0; z-index:60; display:flex; align-items:center; gap:.6rem; padding:.6rem .9rem; background:#fff; box-shadow:var(--shadow)}
 .brand{display:flex; align-items:center; gap:.6rem}
 .crest{width:32px; height:32px}
@@ -15,6 +15,8 @@ button{font-family:inherit}
 .brand-text strong{font-size:.95rem; color:var(--ink)}
 .brand-text span{font-size:.7rem; color:var(--muted)}
 .spacer{flex:1}
+.class-filter{appearance:none;border:1px solid #e5e7eb;border-radius:10px;padding:.35rem .6rem;background:#fff;font-weight:700;color:#0f172a}
+@media (max-width:560px){.class-filter{max-width:42vw}}
 .login-badge{margin-right:.6rem; padding:.2rem .5rem; font-size:.72rem; border-radius:999px; background:#fee2e2; color:#b91c1c; display:none}
 .login-badge.show{display:inline-block}
 .avatar-btn{border:none; background:transparent; width:36px; height:36px; border-radius:999px; overflow:hidden; box-shadow:0 4px 10px rgba(0,0,0,.12)}
