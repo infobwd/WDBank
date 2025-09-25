@@ -139,3 +139,13 @@ button{font-family:inherit}
 }
 .cd-count{color:#334155;font-size:.85rem;margin-top:.2rem}
 
+/* v6.6.8 Leaderboard weekly/monthly */
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem}
+@media (max-width: 900px){ .grid-2{grid-template-columns:1fr} }
+.subhead{font-weight:800;margin:.2rem 0;color:#0f172a}
+.table-wrap table{width:100%;border-collapse:collapse}
+.table-wrap th,.table-wrap td{border-bottom:1px solid #e5e7eb;padding:.4rem .5rem;text-align:center}
+.table-wrap th{background:#f8fafc;color:#334155;font-weight:800}
+.badge{display:inline-block;padding:.1rem .4rem;border-radius:8px;font-size:.78rem;background:#f1f5f9;color:#0f172a}
+.account{font-variant-numeric:tabular-nums}
+
