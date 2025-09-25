@@ -1,298 +1,113 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <title>WDBank — รายงานรวม</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>WDBank • Gamification</title>
+  <link rel="stylesheet" href="styles.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-  <header class="appbar">
-    <div class="brand">
-      <img src="./assets/crest.svg" class="crest" alt="ตราโรงเรียน" />
-      <div class="brand-text">
-        <strong>WDBank</strong>
-        <span>ออมก่อนใช้</span>
+<header class="brand">
+  <div class="brand-left">
+    <img src="logo.png" alt="logo" class="logo"/>
+    <div>
+      <div class="brand-title">WDBank</div>
+      <div class="brand-sub">ออมก่อนใช้ • โรงเรียนบ้านวังด้ง</div>
+    </div>
+  </div>
+  <div class="brand-right">
+    <img id="avatar" class="avatar" src="https://i.pravatar.cc/80" alt="avatar"/>
+  </div>
+</header>
+
+<main>
+  <!-- Mini Tips -->
+  <section class="card">
+    <div class="section-head">
+      <div class="title"><i class="fa-solid fa-lightbulb"></i> เคล็ด(ไม่)ลับการออม</div>
+    </div>
+    <div id="miniTip" class="mini-tip sk sk-title">กำลังโหลด…</div>
+  </section>
+
+  <!-- บัญชีเด่น -->
+  <section id="card-highlight" class="card">
+    <div class="section-head"><div class="title">บัญชีเด่น <span class="muted small">(เข้าเงื่อนไข 2 ข้อ)</span></div></div>
+    <div id="highlightNote" class="muted small">เงื่อนไข: <b>ฝากบ่อยกว่าค่าเฉลี่ยของโรงเรียน (เดือนนี้)</b> และ <b>ไม่มีรายการถอนในเดือนปัจจุบัน</b></div>
+    <div id="highlightGrid" class="hi-grid">
+      <div class="hi-item sk sk-card"></div>
+      <div class="hi-item sk sk-card"></div>
+      <div class="hi-item sk sk-card"></div>
+    </div>
+  </section>
+
+  <!-- Gamification -->
+  <section id="view-gamify" class="card">
+    <div class="section-head"><div class="title">เกมมิฟิเคชัน: ออมให้เป็นนิสัย</div></div>
+    <div class="muted small">ภารกิจรายสัปดาห์, ลีดเดอร์บอร์ดรายชั้น, และสตรีคต่อเนื่อง</div>
+
+    <div class="gm-wrap">
+      <div class="gm-card">
+        <div class="gm-h">ภารกิจสัปดาห์นี้</div>
+        <div class="gm-sub">เป้าหมาย: ฝากอย่างน้อย <b>3</b> ครั้ง/บัญชี ภายในสัปดาห์นี้</div>
+        <div class="gm-progress sk sk-card"><div id="gmProgressBar" class="gm-bar" style="width:0%"></div></div>
+        <div class="gm-stat">
+          <span>สำเร็จ: <b id="gmDone">-</b> บัญชี</span>
+          <span>จากทั้งหมด: <b id="gmTotal">-</b> บัญชี</span>
+          <span>คิดเป็น: <b id="gmPct">0%</b></span>
+        </div>
+      </div>
+
+      <div class="gm-card">
+        <div class="gm-h">ลีดเดอร์บอร์ด (รายชั้น • สัปดาห์นี้)</div>
+        <div class="gm-sub">เรียงตามเฉลี่ยจำนวนครั้งฝากต่อบัญชี (Top 5)</div>
+        <div id="gmClassTop" class="gm-list">
+          <div class="gm-item sk sk-card"></div>
+          <div class="gm-item sk sk-card"></div>
+          <div class="gm-item sk sk-card"></div>
+        </div>
       </div>
     </div>
-    <div class="spacer"></div>
-    <div id="loginBadge" class="login-badge">ยังไม่เข้าสู่ระบบ</div>
-    <button id="btnProfile" class="avatar-btn" aria-label="โปรไฟล์">
-      <img id="avatar" src="./assets/avatar.svg" alt="avatar" />
-    </button>
-  </header>
 
-  <main class="container pb-safe">
-    <!-- Home -->
-    <section id="view-home" class="view show ">
-      <section class="card">
-        <div class="section-head">
-          <div>
-            <div class="title">ออมก่อนใช้ สร้างวินัยการออม</div>
-            <div class="subtitle">วันที่ <span id="todayThai" class="sk sk-text"></span></div>
-          </div>
-
-        </div>
-        <div id="allstars" class="allstars">
-          <div class="star-card sk"><div class="sk sk-title"></div><div class="sk sk-text"></div></div>
-          <div class="star-card sk"><div class="sk sk-title"></div><div class="sk sk-text"></div></div>
-          <div class="star-card sk"><div class="sk sk-title"></div><div class="sk sk-text"></div></div>
-        </div>
-      
-<!-- Mini Tips -->
-<section class="card">
-  <div class="section-head">
-    <div class="title"><i class="fa-solid fa-lightbulb"></i> เคล็ด(ไม่)ลับการออม</div>
-    <button id="btnNextTip" class="btn btn-ghost sm"><i class="fa-solid fa-rotate-right"></i> สุ่มใหม่</button>
-  </div>
-  <div id="miniTip" class="mini-tip sk sk-title">กำลังโหลดเคล็ดลับ…</div>
-</section>
-
-<!-- บัญชีเด่น (เข้าเงื่อนไข 2 ข้อ) -->
-<section id="card-highlight" class="card">
-  <div class="section-head">
-    <div class="title">บัญชีเด่น <span class="muted small">(เข้าเงื่อนไข 2 ข้อ)</span></div>
-  </div>
-  <div id="highlightNote" class="muted small">
-    เงื่อนไข: <b>ฝากบ่อยกว่าค่าเฉลี่ยของโรงเรียน (เดือนนี้)</b> และ <b>ไม่มีรายการถอนในเดือนปัจจุบัน</b>
-  </div>
-  <div id="highlightGrid" class="hi-grid">
-    <div class="hi-item sk sk-card"></div>
-    <div class="hi-item sk sk-card"></div>
-    <div class="hi-item sk sk-card"></div>
-  </div>
-</section>
-
-
-<!-- การ์ด “สรุปสัปดาห์นี้” (placeholder if not exist) -->
-
-<!-- Class Delta Top-4 -->
-<section id="card-class-delta" class="card">
-  <div class="section-head">
-    <div class="title">รายชั้น: เดือนนี้ออมบ่อยกว่าค่าเฉลี่ย <span class="muted small">(Top 4)</span></div>
-    <div class="actions wrap">
-      <button id="btnToggleClassDelta" class="btn btn-ghost sm">
-        <i class="fa-solid fa-chevron-down"></i> แสดง/ซ่อน
-      </button>
-      <button id="btnClassDeltaInfo" class="btn btn-ghost xs" title="อธิบายสูตรรายชั้น">
-        <i class="fa-solid fa-circle-info"></i>
-      </button>
+    <div class="gm-card">
+      <div class="gm-h">สตรีคต่อเนื่อง (Top 5)</div>
+      <div class="gm-sub">นับจำนวนวันติดต่อกันที่มีรายการฝาก (ย้อนหลัง 30 วัน)</div>
+      <div id="gmStreakTop" class="gm-grid">
+        <div class="gm-badge sk sk-card"></div>
+        <div class="gm-badge sk sk-card"></div>
+        <div class="gm-badge sk sk-card"></div>
+      </div>
     </div>
-  </div>
-  <div id="classDeltaCard" class="collapse hidden">
-    <div id="classDeltaDesc" class="muted small">
-      เปรียบเทียบ <b>ค่าเฉลี่ยจำนวนครั้งฝากต่อบัญชี</b> ของแต่ละชั้น กับ <b>ค่าเฉลี่ยทั้งโรงเรียน</b> (เฉพาะเดือนนี้)
+
+    <div class="gm-card">
+      <div class="gm-h">ภารกิจเฉพาะห้อง</div>
+      <div class="gm-sub">เลือกชั้น/ห้องเพื่อดูความคืบหน้า (เป้าหมาย: ฝาก ≥ 3 ครั้ง/บัญชี ภายในสัปดาห์นี้)</div>
+      <div class="gm-row">
+        <select id="gmClassSelect" class="gm-select sk sk-title"><option>กำลังโหลด…</option></select>
+        <button id="gmShareClass" class="btn btn-line"><i class="fa-brands fa-line"></i> แชร์ผลภารกิจห้องนี้</button>
+      </div>
+      <div class="gm-progress sk sk-card"><div id="gmClsBar" class="gm-bar" style="width:0%"></div></div>
+      <div class="gm-stat">
+        <span>สำเร็จ: <b id="gmClsDone">-</b> บัญชี</span>
+        <span>จากทั้งหมด: <b id="gmClsTotal">-</b> บัญชี</span>
+        <span>คิดเป็น: <b id="gmClsPct">0%</b></span>
+      </div>
     </div>
-    <div id="classDeltaGrid" class="cd-grid"></div>
-  </div>
-</section>
+  </section>
+</main>
 
+<footer class="foot">© 2025 WDBank • WD Team</footer>
 
-
-<!-- การ์ด “เดือนนี้ออมบ่อยกว่าค่าเฉลี่ยของโรงเรียน” -->
-<section class="card">
-  <div class="section-head">
-    <div>
-      <div class="title">เดือนนี้ออมบ่อยกว่าค่าเฉลี่ยของโรงเรียน <span id="deltaPct" class="accent sk sk-title sk sk-title">+0%</span></div>
-      <div class="subtitle">คำนวณจากจำนวนครั้ง “ฝาก” ต่อบัญชี เทียบกับเดือนก่อน</div>
-    </div>
-  </div>
-  <div class="delta-wrap">
-    <div class="delta-box"><div class="delta-h">เฉลี่ยเดือนนี้</div><div id="avgThisMonth" class="delta-v sk sk-title sk sk-title">-</div></div>
-    <div class="delta-box"><div class="delta-h">ค่าเฉลี่ยอ้างอิง</div><div id="avgBaseline" class="delta-v sk sk-title sk sk-title">-</div></div>
-  </div>
-  <div id="deltaRange" class="delta-range muted small">ช่วงที่คำนวณ: 
-    <span id="rangeThisMonth">-</span> • อ้างอิง: <span id="rangePrevMonth">-</span>
-    <button id="deltaInfo" class="btn btn-ghost xs" title="อธิบายสูตร"><i class="fa-solid fa-circle-info"></i></button>
-  </div>
-</section>
-
-</section>
-
-      <section class="card">
-        <div class="section-head">
-          <div class="title">สรุปสัปดาห์นี้</div>
-
-        </div>
-        <div class="kpi-grid">
-          <div class="kpi"><div class="kpi-h">ฝากสัปดาห์นี้</div><div class="kpi-v sk sk-title" id="kpiDepCount">-</div><div class="kpi-sub sk sk-text" id="kpiDepAmt">-</div></div>
-          <div class="kpi"><div class="kpi-h">ถอนสัปดาห์นี้</div><div class="kpi-v sk sk-title" id="kpiWdrCount">-</div><div class="kpi-sub sk sk-text" id="kpiWdrAmt">-</div></div>
-          <div class="kpi"><div class="kpi-h">เงินไหลสุทธิ</div><div class="kpi-v sk sk-title" id="kpiNet">-</div><div class="kpi-sub">ฝาก − ถอน</div></div>
-          <div class="kpi"><div class="kpi-h">ชั้นที่เคลื่อนไหวสูงสุด</div><div class="kpi-v sk sk-title" id="kpiTopClass">-</div><div class="kpi-sub sk sk-text" id="kpiTopClassDetail">-</div></div>
-        </div>
-      </section>
-
-      <section class="">
-        <div class="tabs scroll-x">
-          <button class="tab active" data-tab="amount"><i class="fa-solid fa-trophy"></i> ยอดเงินสูง • ฝาก ≥ ค่าเฉลี่ย</button>
-          <button class="tab" data-tab="frequent"><i class="fa-solid fa-clock-rotate-left"></i> ฝากถี่มาก</button>
-          <button class="tab" data-tab="depositonly"><i class="fa-solid fa-ban"></i> ไม่เคยถอน • ฝาก ≥ ค่าเฉลี่ย</button>
-          <button class="tab" data-tab="latest"><i class="fa-solid fa-list-ol"></i> 10 รายการล่าสุด</button>
-        </div>
-
-        <div id="panel-amount" class="panel show">
-          <section class="card">
-            <div class="section-head stack-sm">
-              <div>
-                <div class="title">TOP 10 ยอดเงินสูงสุด (และฝาก ≥ ค่าเฉลี่ย)</div>
-                <div class="desc">บัญชีที่มีเงินคงเหลือสูงและจำนวนครั้งฝากไม่น้อยกว่าค่าเฉลี่ยของทั้งโรงเรียน</div>
-              </div>
-  
-            </div>
-            <div class="table-wrap">
-              <table class="table" id="table-amount"><thead><tr id="th-amount"></tr></thead><tbody id="tb-amount"><tr class="sk"><td class="sk sk-text" colspan="5">กำลังโหลด…</td></tr></tbody></table>
-            </div>
-          </section>
-        </div>
-
-        <div id="panel-frequent" class="panel">
-          <section class="card">
-            <div class="section-head stack-sm">
-              <div>
-                <div class="title">TOP 10 บัญชีฝากถี่มาก</div>
-                <div class="desc">โฟกัสเฉพาะ “ความถี่ในการฝาก” โดยไม่ดูยอดเงินคงเหลือ</div>
-              </div>
-
-            </div>
-            <div class="table-wrap">
-              <table class="table" id="table-frequent"><thead><tr id="th-frequent"></tr></thead><tbody id="tb-frequent"><tr class="sk"><td class="sk sk-text" colspan="5">กำลังโหลด…</td></tr></tbody></table>
-            </div>
-          </section>
-        </div>
-
-        <div id="panel-depositonly" class="panel">
-          <section class="card">
-            <div class="section-head stack-sm">
-              <div>
-                <div class="title">TOP 10 ไม่เคยถอน และฝาก ≥ ค่าเฉลี่ย</div>
-                <div class="desc">เหมาะยกย่องการออมระยะยาว ไม่พบรายการถอน และฝากบ่อยไม่น้อยกว่าค่าเฉลี่ย</div>
-              </div>
-   
-            </div>
-            <div class="table-wrap">
-              <table class="table" id="table-depositonly"><thead><tr id="th-depositonly"></tr></thead><tbody id="tb-depositonly"><tr class="sk"><td class="sk sk-text" colspan="5">กำลังโหลด…</td></tr></tbody></table>
-            </div>
-          </section>
-        </div>
-
-        <div id="panel-latest" class="panel">
-          <section class="card">
-            <div class="section-head"><div class="title">10 รายการฝากถอนล่าสุด</div></div>
-            <div class="table-wrap">
-              <table class="table" id="table-latest"><thead><tr id="th-latest"></tr></thead><tbody id="tb-latest"><tr class="sk"><td class="sk sk-text" colspan="5">กำลังโหลด…</td></tr></tbody></table>
-            </div>
-          </section>
-        </div>
-      </section>
-    </section>
-
-    <!-- Leaderboard -->
-    <section id="view-leaderboard" class="view">
-      <section class="card">
-        <div class="section-head">
-          <div class="title"><i class="fa-solid fa-ranking-star"></i> ลีดเดอร์บอร์ดระดับชั้น
-            <small style="color:#64748b;font-weight:600">• ปีการศึกษา: <span id="lb-academic">-</span></small>
-          </div>
-        </div>
-        <div class="actions wrap" style="margin-bottom:.4rem">
-          <button id="lb-share" class="btn btn-line sm"><i class="fa-brands fa-line"></i> แชร์ลีดเดอร์บอร์ด</button>
-          <button id="lb-pdf-week" class="btn btn-primary sm"><i class="fa-solid fa-file-pdf"></i> PDF สัปดาห์นี้</button>
-          <button id="lb-pdf-month" class="btn btn-primary sm"><i class="fa-solid fa-file-pdf"></i> PDF เดือนนี้</button>
-          <button id="lb-pdf-term" class="btn btn-primary sm"><i class="fa-solid fa-file-pdf"></i> PDF เทอมนี้</button>
-        </div>
-        <div class="seg-pills">
-          <button class="pill active" data-scope="week">สัปดาห์นี้</button>
-          <button class="pill" data-scope="month">เดือนนี้</button>
-          <button class="pill" data-scope="term">เทอมนี้</button>
-        </div>
-        <div class="table-wrap">
-          <table class="table" id="leader-table">
-            <thead>
-              <tr>
-                <th>ชั้น</th><th>ครั้งฝาก</th><th>ครั้งถอน</th><th>รวมฝาก</th><th>รวมถอน</th><th>สุทธิ</th>
-              </tr>
-            </thead>
-            <tbody id="leader-body">
-              <tr class="sk"><td class="sk sk-text" colspan="6">กำลังโหลด…</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </section>
-
-    <!-- Report Hub -->
-    <section id="view-reports" class="view">
-      <section class="card">
-        <div class="section-head">
-          <div class="title"><i class="fa-solid fa-chart-pie"></i> ศูนย์รวมรายงาน (Report Hub)</div>
-        </div>
-        <div class="seg-pills" id="chartScope">
-          <button class="pill active" data-scope="week">สัปดาห์นี้</button>
-          <button class="pill" data-scope="month">เดือนนี้</button>
-          <button class="pill" data-scope="term">เทอมนี้</button>
-        </div>
-        <div class="charts">
-          <div class="chart-card"><canvas id="chartBar" height="220"></canvas></div>
-          <div class="chart-card"><canvas id="chartLine" height="220"></canvas></div>
-        </div>
-        <div class="report-grid" style="margin-top:.8rem">
-          <button id="hub-week" class="btn btn-primary"><i class="fa-solid fa-calendar-week"></i> PDF สัปดาห์นี้</button>
-          <button id="hub-month" class="btn btn-primary"><i class="fa-solid fa-calendar-days"></i> PDF เดือนนี้</button>
-          <button id="hub-classsum" class="btn btn-primary"><i class="fa-solid fa-layer-group"></i> PDF คงเหลือรายชั้น</button>
-          <button id="hub-savings" class="btn btn-primary"><i class="fa-solid fa-piggy-bank"></i> PDF ออมสิน</button>
-          <button id="hub-amount" class="btn btn-primary"><i class="fa-solid fa-trophy"></i> PDF Top10 ยอดสูง</button>
-          <button id="hub-frequent" class="btn btn-primary"><i class="fa-solid fa-clock-rotate-left"></i> PDF Top10 ฝากถี่</button>
-          <button id="hub-depositonly" class="btn btn-primary"><i class="fa-solid fa-ban"></i> PDF Top10 ไม่เคยถอน</button>
-        </div>
-        <div class="muted">รวมปุ่มออกเอกสารทั้งหมดไว้ที่นี่ให้แตะจาก Navbar ล่างได้สะดวก</div>
-      </section>
-    </section>
-
-    <!-- Share quick -->
-    <section id="view-share" class="view">
-      <section class="card">
-        <div class="section-head"><div class="title"><i class="fa-brands fa-line"></i> แชร์ผ่าน LINE</div></div>
-        <div class="report-grid">
-          <button id="share-amount-quick" class="btn btn-line"><i class="fa-brands fa-line"></i> แชร์ Top10 ยอดสูง</button>
-          <button id="share-frequent-quick" class="btn btn-line"><i class="fa-brands fa-line"></i> แชร์ Top10 ฝากถี่</button>
-          <button id="share-depositonly-quick" class="btn btn-line"><i class="fa-brands fa-line"></i> แชร์ Top10 ไม่เคยถอน</button>
-          <button id="share-allstars-quick" class="btn btn-line"><i class="fa-brands fa-line"></i> แชร์ 3 บัญชีเด่น</button>
-        </div>
-        <div class="muted">* ต้องเข้าสู่ระบบ LINE ก่อนจึงจะสามารถแชร์ได้</div>
-      </section>
-    </section>
-
-    <!-- Profile -->
-    <section id="view-profile" class="view">
-      <section class="card">
-        <div class="section-head"><div class="title"><i class="fa-solid fa-user"></i> โปรไฟล์</div></div>
-        <div class="profile-grid">
-          <div><strong>สถานะ:</strong> <span id="prof-status">กำลังตรวจสอบ…</span></div>
-          <div><strong>ชื่อใน LINE:</strong> <span id="prof-name">-</span></div>
-        </div>
-      </section>
-    </section>
-  </main>
-
-  <!-- Bottom Navbar -->
-  <nav class="bottom-nav">
-    <button class="nav-btn active" data-view="home"><i class="fa-solid fa-house"></i><span>หน้าหลัก</span></button>
-    <button class="nav-btn" data-view="leaderboard"><i class="fa-solid fa-ranking-star"></i><span>ลีดเดอร์บอร์ด</span></button>
-    <button class="nav-btn" data-view="reports"><i class="fa-solid fa-chart-pie"></i><span>รายงาน</span></button>
-    <button class="nav-btn" data-view="share"><i class="fa-brands fa-line"></i><span>แชร์</span></button>
-    <button class="nav-btn" data-view="profile"><i class="fa-solid fa-user"></i><span>โปรไฟล์</span></button>
-  </nav>
-
-  <div id="pdfReport" class="pdf-report" aria-hidden="true"></div>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script src="./app.js"></script>
+<script>
+  // Config (พี่ตั้ง LIFF_ID ไว้ที่นี่ได้)
+  window.LIFF_ID = window.LIFF_ID || "";
+  window.SHEET_TX = "https://opensheet.elk.sh/1EZtfvb0h9wYZbRFTGcm0KVPScnyu6B-boFG6aMpWEUo/Sortรายการฝากและถอน";
+  window.SHEET_ACCOUNTS = "https://opensheet.elk.sh/1EZtfvb0h9wYZbRFTGcm0KVPScnyu6B-boFG6aMpWEUo//บัญชี";
+</script>
+<script src="app.js"></script>
 </body>
 </html>
