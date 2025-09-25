@@ -4,7 +4,7 @@ const LIFF_ID = '2005230346-2OVa774O'; // เปลี่ยนเป็น LIFF
 const SHEET_AMOUNT      = 'https://opensheet.elk.sh/1EZtfvb0h9wYZbRFTGcm0KVPScnyu6B-boFG6aMpWEUo/Sortบัญชีเงินมากและฝากมากกว่าหรือเท่ากับค่าเฉลี่ย';
 const SHEET_FREQUENT    = 'https://opensheet.elk.sh/1EZtfvb0h9wYZbRFTGcm0KVPScnyu6B-boFG6aMpWEUo/Sortบัญชีฝากถี่มาก';
 const SHEET_DEPOSITONLY = 'https://opensheet.elk.sh/1EZtfvb0h9wYZbRFTGcm0KVPScnyu6B-boFG6aMpWEUo/Sortบัญชีไม่ถอนและฝากมากกว่าหรือเท่ากับค่าเฉลี่ย';
-window.SHEET_TX = window.SHEET_TX || 'https://opensheet.elk.sh/1EZtfvb0h9wYZbRFTGcm0KVPScnyu6B-boFG6aMpWEUo/Sortรายการฝากและถอน';
+const SHEET_TX          = 'https://opensheet.elk.sh/1EZtfvb0h9wYZbRFTGcm0KVPScnyu6B-boFG6aMpWEUo/Sortรายการฝากและถอน';
 const SHEET_ACCOUNTS    = 'https://opensheet.elk.sh/1EZtfvb0h9wYZbRFTGcm0KVPScnyu6B-boFG6aMpWEUo//บัญชี';
 
 // =================== State & Utils ===================
@@ -245,184 +245,7 @@ $id('btnNextTip')?.addEventListener('click', ()=>{ const el=$id('miniTip'); if(e
 
 
 
-// ==== Monthly Delta ====
-function computeMonthlyDeltaCard(){
-  try{
-    const now=new Date(); const {start,end}=monthRange(now); const prev=monthRange(prevMonth(now));
-    const mapNow=new Map(), mapPrev=new Map();
-    const txArr = (typeof TX!=='undefined' && Array.isArray(TX))? TX : (window.TX||[]);
-    (txArr||[]).forEach(r=>{
-      const d=parseThaiDate(r['วันที่']); if(!d) return;
-      const acc=String(r['บัญชี']||r['รหัสนักเรียน']||'').trim(); if(!acc) return;
-      if(r['รายการ']==='ฝาก'){
-        if(inRange(d,start,end)) mapNow.set(acc,(mapNow.get(acc)||0)+1);
-        if(inRange(d,prev.start,prev.end)) mapPrev.set(acc,(mapPrev.get(acc)||0)+1);
-      }
-    });
-    const avgNow=[...mapNow.values()].reduce((a,b)=>a+b,0)/Math.max(mapNow.size,1);
-    const avgPrev=[...mapPrev.values()].reduce((a,b)=>a+b,0)/Math.max(mapPrev.size,1);
-    const pct=(avgPrev>0)? ((avgNow-avgPrev)/avgPrev*100):0;
-    setText('deltaPct',(pct>=0?'+':'')+pct.toFixed(0)+'%');
-    setText('avgThisMonth', isFinite(avgNow)? avgNow.toFixed(2):'-');
-    setText('avgBaseline',  isFinite(avgPrev)? avgPrev.toFixed(2):'—');
-    ['deltaPct','avgThisMonth','avgBaseline'].forEach(id=>$id(id)?.classList.remove('sk','sk-title'));
-  }catch(e){ console.warn('computeMonthlyDeltaCard error', e); }
-}
-
-
-// ==== Leaderboard + Report Hub (WB namespace) ====
-window.WB = window.WB || {};
-(function(WB){
-  function weekRange(date){
-    const d=new Date(date);
-    const day=(d.getDay()+6)%7;
-    const start=new Date(d); start.setDate(d.getDate()-day); start.setHours(0,0,0,0);
-    const end=new Date(start); end.setDate(start.getDate()+7);
-    return {start,end};
-  }
-  function currentTermRange(){
-    const txArr = window.TX || [];
-    let latest=null;
-    txArr.forEach(r=>{
-      const s=String(r['ปีการศึกษา']||'').trim();
-      const m=s.match(/^([12])\/(\d{4})$/);
-      if(m){ const t=+m[1], y=+m[2]; if(!latest || y>latest.y || (y===latest.y && t>latest.t)){ latest={t,y}; } }
-    });
-    if(latest){
-      const y = latest.y>2400? latest.y-543: latest.y;
-      return (latest.t===1)
-        ? { start:new Date(y,4,1), end:new Date(y,10,1) }
-        : { start:new Date(y,10,1), end:new Date(y+1,4,30,23,59,59,999) };
-    }
-    return monthRange(new Date());
-  }
-  function filterByRange(arr, keyDate, range){
-    return (arr||[]).filter(r=>{ const d=parseThaiDate(r[keyDate]); return inRange(d, range.start, range.end); });
-  }
-  WB.leaderboardData = function(mode){
-    const txArr = window.TX || [];
-    const range = (mode==='week') ? weekRange(new Date())
-                : (mode==='month') ? monthRange(new Date())
-                : currentTermRange();
-    const sample = filterByRange(txArr, 'วันที่', range);
-    const perAcc = new Map();
-    sample.forEach(r=>{
-      const acc=String(r['บัญชี']||r['รหัสนักเรียน']||'').trim(); if(!acc) return;
-      const cls=String(r['ชั้น']||r['ห้อง']||'ไม่ระบุ');
-      const act=String(r['รายการ']||'');
-      const amt=toNumber(r['จำนวนเงิน']);
-      const node=perAcc.get(acc)||{depCount:0,depSum:0,cls};
-      if(act==='ฝาก'){ node.depCount += 1; node.depSum += isFinite(amt)? amt:0; }
-      perAcc.set(acc, node);
-    });
-    const counts = [...perAcc.values()].map(v=>v.depCount).filter(v=>v>0);
-    const baseline = counts.length? (counts.reduce((a,b)=>a+b,0)/counts.length) : 0;
-    const rows = [...perAcc.entries()].map(([acc,info])=>{
-      const score = info.depCount + (info.depCount>=baseline? 0.5:0);
-      return { acc, cls: info.cls, depCount: info.depCount, depSum: info.depSum, score, baseline };
-    }).filter(r=>r.depCount>0);
-    rows.sort((a,b)=> b.score - a.score || b.depCount - a.depCount || b.depSum - a.depSum);
-    return {rows, baseline, range};
-  };
-  WB.renderLeaderboard = function(mode){
-    const {rows, baseline} = WB.leaderboardData(mode);
-    const grid = $id('lb-grid'); if(!grid) return;
-    grid.innerHTML = '';
-    rows.slice(0,10).forEach((r,i)=>{
-      const div=document.createElement('div');
-      div.className='lb-card';
-      div.innerHTML = `<div class="lb-rank">${i+1}</div>
-        <div class="lb-body">
-          <div class="lb-name">${formatAccountMasked(r.acc)}</div>
-          <div class="lb-sub">ชั้น ${r.cls} • ฝาก ${r.depCount} ครั้ง • ${fmtNumber(r.depSum)} บาท</div>
-        </div>`;
-      grid.appendChild(div);
-    });
-    setText('lb-desc', 'เกณฑ์อ้างอิง (ฝากเฉลี่ยต่อบัญชี) = ' + (baseline? baseline.toFixed(2): '0'));
-  };
-  let barChart, lineChart;
-  WB.setCharts = function(mode){
-    const {rows, range} = WB.leaderboardData(mode);
-    const ctx1 = $id('barOverall')?.getContext('2d');
-    const ctx2 = $id('lineTrend')?.getContext('2d');
-    if(!ctx1 || !ctx2) return;
-    const top = rows.slice(0,10);
-    const labels = top.map(r=>formatAccountMasked(r.acc));
-    const depCounts = top.map(r=>r.depCount);
-    const depSums = top.map(r=>r.depSum);
-    const txArr = window.TX||[];
-    const span=[]; for(let d=new Date(range.start); d<range.end; d.setDate(d.getDate()+1)) span.push(new Date(d));
-    const dailyDep = span.map(d=>{
-      const dayTx = (txArr||[]).filter(r=>{
-        const t=parseThaiDate(r['วันที่']);
-        return t && t.getFullYear()===d.getFullYear() && t.getMonth()===d.getMonth() && t.getDate()===d.getDate() && r['รายการ']==='ฝาก';
-      });
-      return dayTx.reduce((a,b)=> a + toNumber(b['จำนวนเงิน']), 0);
-    });
-    if(barChart) barChart.destroy();
-    if(lineChart) lineChart.destroy();
-    barChart = new Chart(ctx1, { type:'bar',
-      data:{ labels, datasets:[ {label:'จำนวนครั้งฝาก (Top 10)', data:depCounts}, {label:'ยอดฝากรวม (บาท)', data:depSums} ] },
-      options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom'}} }
-    });
-    lineChart = new Chart(ctx2, { type:'line',
-      data:{ labels: span.map(d=> d.toLocaleDateString('th-TH',{month:'short', day:'numeric'})), datasets:[ {label:'ยอดฝากรายวัน (บาท)', data:dailyDep} ] },
-      options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom'}} }
-    });
-  };
-  WB.bindLeaderboard = function(){
-    document.querySelectorAll('[data-lb]').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        const mode=btn.getAttribute('data-lb');
-        WB.renderLeaderboard(mode);
-        WB.setCharts(mode);
-        document.querySelectorAll('[data-lb]').forEach(b=>b.classList.toggle('active', b===btn));
-      });
-    });
-    document.querySelectorAll('[data-rg]').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        const mode=btn.getAttribute('data-rg');
-        WB.setCharts(mode);
-        document.querySelectorAll('[data-rg]').forEach(b=>b.classList.toggle('active', b===btn));
-      });
-    });
-    $id('share-leaderboard')?.addEventListener('click', async ()=>{
-      try{ if(typeof liff!=='undefined'){ try{ await liff.init({liffId:LIFF_ID}); }catch(e){} if(!liff.isLoggedIn()){ await Swal.fire({title:'ต้องเข้าสู่ระบบ LINE',text:'เพื่อแชร์ลีดเดอร์บอร์ด',icon:'info',confirmButtonText:'เข้าสู่ระบบ'}); liff.login({redirectUri:location.href}); return; } } }catch(e){}
-      const activeBtn = document.querySelector('[data-lb].active') || document.querySelector('[data-lb="week"]');
-      const mode = activeBtn ? activeBtn.getAttribute('data-lb') : 'week';
-      const {rows} = WB.leaderboardData(mode);
-      const headers=['อันดับ','บัญชี','ชั้น','ครั้งฝาก','ยอดรวม'];
-      const headerBox={type:'box',layout:'horizontal',contents:headers.map(h=>({type:'text',text:h,size:'xs',weight:'bold',align:'center',flex:1}))};
-      const dataBoxes = rows.slice(0,10).map((r,i)=>({type:'box',layout:'horizontal',backgroundColor: i%2? '#FFFFFF':'#F5F6FA',contents:[
-        {type:'text',text:String(i+1),size:'xs',align:'center',flex:1},
-        {type:'text',text:formatAccountMasked(r.acc),size:'xs',align:'center',flex:2},
-        {type:'text',text:r.cls,size:'xs',align:'center',flex:1},
-        {type:'text',text:String(r.depCount),size:'xs',align:'center',flex:1},
-        {type:'text',text:fmtNumber(r.depSum),size:'xs',align:'center',flex:2},
-      ]}));
-      const bubble={type:'bubble',size:'giga',body:{type:'box',layout:'vertical',contents:[
-        {type:'text',text:'WDBank • ลีดเดอร์บอร์ด ('+mode+')',weight:'bold',size:'lg'},
-        {type:'text',text:'ปีการศึกษา: '+ (window.latestTermFromTX? (latestTermFromTX()||'-'):'-') +' • '+ thaiDateString(),color:'#7286D3',size:'sm'},
-        {type:'separator',margin:'md'}, headerBox, {type:'separator',margin:'sm'},
-        {type:'box',layout:'vertical',margin:'md',spacing:'sm',contents:dataBoxes}
-      ]},
-      footer:{type:'box',layout:'vertical',spacing:'sm',contents:[{type:'button',style:'primary',action:{type:'uri',label:'เปิด WDBank (LIFF)',uri:'https://liff.line.me/'+LIFF_ID}}]}};
-      try{ await liff.shareTargetPicker([{type:'flex',altText:'WDBank • ลีดเดอร์บอร์ด',contents:bubble}]); if(liff.closeWindow) liff.closeWindow(); }catch(e){ console.warn('shareLeaderboard error', e); }
-    });
-    ensureTX().then(()=>{ WB.renderLeaderboard('week'); WB.setCharts('week'); });
-    document.querySelector('[data-lb="week"]')?.classList.add('active');
-    document.querySelector('[data-rg="week"]')?.classList.add('active');
-  };
-})(window.WB);
-document.addEventListener('DOMContentLoaded', ()=>{ try{ window.WB?.bindLeaderboard(); }catch(e){} });
-
-
-
-document.addEventListener('DOMContentLoaded', ()=>{
-  try{ setMiniTip(); }catch(e){}
-  ensureTX().then(()=>{ try{ computeMonthlyDeltaCard(); }catch(e){} });
-});
-// ==== v6.6.2: Ensure TX is loaded from opensheet (deposits source) ====
+// ==== Data Loader ====
 window.SHEET_TX = window.SHEET_TX || "https://opensheet.elk.sh/1EZtfvb0h9wYZbRFTGcm0KVPScnyu6B-boFG6aMpWEUo/Sortรายการฝากและถอน";
 
 async function ensureTX(){
@@ -430,7 +253,6 @@ async function ensureTX(){
     if (Array.isArray(window.TX) && window.TX.length) return window.TX;
     const res = await fetch(window.SHEET_TX, { cache: "no-store" });
     const data = await res.json();
-    // Data comes latest-first; we don't rely on order. Keep all rows.
     window.TX = Array.isArray(data)? data : [];
   }catch(e){
     console.warn("ensureTX error", e);
@@ -441,40 +263,44 @@ async function ensureTX(){
 
 
 
-// v6.6.4: Thai date range label + tooltip for Monthly Delta
-function thaiMonthRangeLabel(range){
+// ==== Monthly Delta ====
+function computeMonthlyDeltaCard(){
   try{
-    const s = new Date(range.start);
-    const e = new Date(range.end); e.setDate(e.getDate()-1); // end is exclusive
-    if (s.getMonth()===e.getMonth() && s.getFullYear()===e.getFullYear()){
-      // "1–30 กันยายน 2568"
-      const monthYear = e.toLocaleDateString('th-TH',{month:'long', year:'numeric'});
-      return `${s.getDate()}–${e.getDate()} ${monthYear}`;
-    }else{
-      // cross-month fallback
-      const S = s.toLocaleDateString('th-TH',{day:'numeric', month:'short'});
-      const E = e.toLocaleDateString('th-TH',{day:'numeric', month:'short', year:'numeric'});
-      return `${S} – ${E}`;
-    }
-  }catch(_){ return '-'; }
+    const now=new Date(); const curr=monthRange(now); const prev=monthRange(prevMonth(now));
+    const mapNow=new Map(), mapPrev=new Map();
+    const txArr = (window.TX||[]);
+    (txArr||[]).forEach(r=>{
+      const d=parseThaiDate(r['วันที่']); if(!d) return;
+      const acc=String(r['บัญชี']||r['รหัสนักเรียน']||'').trim(); if(!acc) return;
+      if(r['รายการ']==='ฝาก'){
+        if(inRange(d,curr.start,curr.end)) mapNow.set(acc,(mapNow.get(acc)||0)+1);
+        if(inRange(d,prev.start,prev.end)) mapPrev.set(acc,(mapPrev.get(acc)||0)+1);
+      }
+    });
+    const avgNow=[...mapNow.values()].reduce((a,b)=>a+b,0)/Math.max(mapNow.size,1);
+    const avgPrev=[...mapPrev.values()].reduce((a,b)=>a+b,0)/Math.max(mapPrev.size,1);
+    const pct=(avgPrev>0)? ((avgNow-avgPrev)/avgPrev*100):0;
+    setText('deltaPct',(pct>=0?'+':'')+pct.toFixed(0)+'%');
+    setText('avgThisMonth', isFinite(avgNow)? avgNow.toFixed(2):'-');
+    setText('avgBaseline',  isFinite(avgPrev)? avgPrev.toFixed(2):'—');
+    ['deltaPct','avgThisMonth','avgBaseline'].forEach(id=>$id(id)?.classList.remove('sk','sk-title'));
+    // ranges short month
+    const label = (range)=>{
+      const s = new Date(range.start), e = new Date(range.end); e.setDate(e.getDate()-1);
+      if (s.getMonth()===e.getMonth() && s.getFullYear()===e.getFullYear()){
+        const monthYear = e.toLocaleDateString('th-TH',{month:'short', year:'numeric'});
+        return `${s.getDate()}–${e.getDate()} ${monthYear}`;
+      } else {
+        const S = s.toLocaleDateString('th-TH',{day:'numeric', month:'short'});
+        const E = e.toLocaleDateString('th-TH',{day:'numeric', month:'short', year:'numeric'});
+        return `${S} – ${E}`;
+      }
+    };
+    setText('rangeThisMonth', label(curr));
+    setText('rangePrevMonth', label(prev));
+  }catch(e){ console.warn('computeMonthlyDeltaCard error', e); }
 }
-
-// augment computeMonthlyDeltaCard to also set date ranges
-const __old_computeMonthlyDeltaCard = (typeof computeMonthlyDeltaCard==='function') ? computeMonthlyDeltaCard : null;
-computeMonthlyDeltaCard = function(){
-  try{
-    const now=new Date(); 
-    const curr=monthRange(now); 
-    const prev=monthRange(prevMonth(now));
-    // set ranges for UI
-    setText('rangeThisMonth', thaiMonthRangeLabel(curr));
-    setText('rangePrevMonth', thaiMonthRangeLabel(prev));
-  }catch(e){}
-  // call original logic
-  if(__old_computeMonthlyDeltaCard){ try{ __old_computeMonthlyDeltaCard(); }catch(e){} }
-};
-
-// tooltip (info) for formula explanation
+// Tooltip for formula
 document.addEventListener('DOMContentLoaded', ()=>{
   $id('deltaInfo')?.addEventListener('click', ()=>{
     const html = [
@@ -489,8 +315,79 @@ document.addEventListener('DOMContentLoaded', ()=>{
     if (typeof Swal!=='undefined' && Swal.fire){
       Swal.fire({title:'วิธีคำนวณ', html, icon:'info'});
     }else{
-      alert('วิธีคำนวณ:\\n1) นับเฉพาะ “ฝาก”\\n2) ค่าเฉลี่ยจำนวนครั้งฝากต่อบัญชี\\n3) ((เดือนนี้−เดือนก่อน)/เดือนก่อน)×100');
+      alert('วิธีคำนวณ:\n1) นับเฉพาะ “ฝาก”\n2) ค่าเฉลี่ยจำนวนครั้งฝากต่อบัญชี\n3) ((เดือนนี้−เดือนก่อน)/เดือนก่อน)×100');
     }
   });
 });
 
+
+
+// v6.6.6: Class Delta Top-4 (this month vs school avg), collapsible + tooltip
+function computeClassDeltaTop4(){
+  try{
+    const now=new Date(); const {start,end}=monthRange(now);
+    const txArr = (window.TX||[]).filter(r=>{
+      if(String(r['รายการ'])!=='ฝาก') return false;
+      const d=parseThaiDate(r['วันที่']); return inRange(d,start,end);
+    });
+    const perClassAccounts = new Map();
+    txArr.forEach(r=>{
+      const cls=String(r['ชั้น']||r['ห้อง']||'ไม่ระบุ');
+      const acc=String(r['บัญชี']||r['รหัสนักเรียน']||'').trim();
+      if(!acc) return;
+      const map = perClassAccounts.get(cls) || new Map();
+      map.set(acc, (map.get(acc)||0) + 1);
+      perClassAccounts.set(cls, map);
+    });
+    let schoolSum=0, schoolN=0;
+    perClassAccounts.forEach(map=>{ map.forEach(v=>{ schoolSum+=v; schoolN+=1; }); });
+    const baseline = schoolN? (schoolSum/schoolN) : 0;
+    const rows=[];
+    perClassAccounts.forEach((map, cls)=>{
+      let sum=0, n=0; map.forEach(v=>{ sum+=v; n+=1; });
+      const avg = n? (sum/n):0;
+      const pct = (baseline>0)? ((avg-baseline)/baseline*100):0;
+      rows.push({cls, avg, pct});
+    });
+    rows.sort((a,b)=> b.pct - a.pct || b.avg - a.avg);
+    const top4 = rows.slice(0,4);
+    const grid=$id('classDeltaGrid'); if(!grid) return;
+    grid.innerHTML='';
+    top4.forEach(r=>{
+      const el=document.createElement('div');
+      el.className='cd-item';
+      el.innerHTML = `<div class="cd-h">ชั้น ${r.cls}</div>
+        <div class="cd-sub">เฉลี่ยต่อบัญชี: ${isFinite(r.avg)? r.avg.toFixed(2):'-'} ครั้ง/เดือน</div>
+        <div class="cd-sub">เทียบทั้งโรงเรียน: <span class="pct-up">${(isFinite(r.pct)? (r.pct>=0? '+':'')+r.pct.toFixed(0):'0')}%</span></div>`;
+      grid.appendChild(el);
+    });
+  }catch(e){ console.warn('computeClassDeltaTop4', e); }
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  $id('btnToggleClassDelta')?.addEventListener('click', ()=>{
+    const box=$id('classDeltaCard'); if(!box) return;
+    box.classList.toggle('hidden');
+  });
+  $id('btnClassDeltaInfo')?.addEventListener('click', ()=>{
+    const html = [
+      '<div style="text-align:left;line-height:1.6">',
+      '<b>วิธีคำนวณ (รายชั้น)</b><br/>',
+      '• ใช้เฉพาะรายการ <b>“ฝาก”</b> ของเดือนนี้<br/>',
+      '• คำนวณ <b>ค่าเฉลี่ยจำนวนครั้งฝากต่อบัญชี</b> ของแต่ละชั้น (เฉพาะบัญชีที่มีฝาก)<br/>',
+      '• เทียบกับ <b>ค่าเฉลี่ยทั้งโรงเรียน</b> (เดือนนี้) → แสดง % มาก/น้อยกว่า baseline<br/>',
+      '• แสดง Top 4 ชั้นที่ “มากกว่า baseline” สูงที่สุด',
+      '</div>'
+    ].join('');
+    if (typeof Swal!=='undefined' && Swal.fire){
+      Swal.fire({title:'สูตรรายชั้น', html, icon:'info'});
+    }else{
+      alert('รายชั้น: ใช้เฉพาะฝากเดือนนี้ → เฉลี่ยครั้ง/บัญชีต่อชั้น → เทียบกับเฉลี่ยทั้งโรงเรียน (เดือนนี้)');
+    }
+  });
+  if (typeof ensureTX === 'function') {
+    ensureTX().then(()=>{ try{ computeMonthlyDeltaCard(); computeClassDeltaTop4(); }catch(e){} });
+  } else {
+    try{ computeMonthlyDeltaCard(); computeClassDeltaTop4(); }catch(e){}
+  }
+});

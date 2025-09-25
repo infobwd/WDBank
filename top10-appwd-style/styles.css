@@ -113,7 +113,7 @@ button{font-family:inherit}
   .btn.sm{padding:.35rem .5rem; font-size:.82rem}
 }
 
-/* PATCH v6.6.1: Cards + Leaderboard + Report Hub */
+/* v6.6.6 Cards + Delta + Class Top-4 */
 .mini-tip{font-size:1.05rem;font-weight:700;color:#0f172a}
 .delta-wrap{display:grid;grid-template-columns:repeat(2,1fr);gap:.8rem}
 .delta-box{border:1px dashed #cbd5e1;border-radius:12px;padding:.6rem .8rem;background:#fff}
@@ -122,17 +122,12 @@ button{font-family:inherit}
 .accent{color:#059669}
 .actions.wrap{display:flex;gap:.5rem;flex-wrap:wrap}
 .btn.sm{padding:.35rem .55rem;font-size:.86rem}
-.lb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.8rem}
-.lb-card{border:1px solid #e5e7eb;border-radius:14px;padding:.8rem;background:#fff;display:flex;gap:.6rem;align-items:center}
-.lb-rank{width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:#F1F5FF;color:#2563EB;font-weight:800}
-.lb-body{display:flex;flex-direction:column}
-.lb-name{font-weight:800;color:#0f172a}
-.lb-sub{color:#64748b;font-size:.85rem}
-.charts{display:grid;grid-template-columns:1fr;gap:1rem}
-@media(min-width:760px){ .charts{grid-template-columns:1fr 1fr} }
-
-/* v6.6.4 Monthly Delta range + tooltip */
-.small{font-size:.85rem}
 .btn.xs{padding:.2rem .4rem;font-size:.78rem;line-height:1;border-radius:10px}
 .delta-range{margin-top:.5rem}
+.collapse.hidden{display:none}
+.cd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.8rem;margin-top:.5rem}
+.cd-item{border:1px solid #e5e7eb;border-radius:12px;padding:.8rem;background:#fff}
+.cd-h{font-weight:800;color:#0f172a}
+.cd-sub{color:#64748b;font-size:.9rem;margin-top:.2rem}
+.pct-up{color:#059669;font-weight:800}
 
