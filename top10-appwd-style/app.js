@@ -256,7 +256,7 @@ window.MINI_TIPS = window.MINI_TIPS || [
 ];
 function setMiniTip(){ const el=$id('miniTip'); if(!el) return; const idx=Math.floor(Date.now()/86400000)%MINI_TIPS.length; el.textContent=MINI_TIPS[idx]; el.classList.remove('sk','sk-title'); }
 // auto-rotate every 12s
-document.addEventListener('DOMContentLoaded', ()=>{
+document.addEventListener('DOMContentLoaded', ()=>{ showSkeletonGrid('featuredGrid', 4, 'feat-item');
   try{
     setMiniTip();
     setInterval(()=>{
@@ -469,6 +469,7 @@ async function renderFeaturedMonthly(){
   const grid=$id('featuredGrid'), none=$id('featuredNone');
   if (!grid) return;
   grid.innerHTML='';
+  clearSkeletonGrid('featuredGrid');
   if (!top2.length){
     if (none) none.style.display='block';
     return;
@@ -545,6 +546,7 @@ async function renderTopBal(freq='month'){
   rows.sort((a,b)=> b.bal - a.bal || b.dep - a.dep);
   const top10 = rows.slice(0,10);
   const grid=$id('gridTopBal'); if(!grid) return;
+  clearSkeletonGrid('gridTopBal');
   grid.innerHTML = top10.map((r,i)=>`
     <div class="lb-item">
       <div class="lb-h">#${i+1} ${formatAccountMasked(r.acc)}</div>
@@ -562,6 +564,7 @@ async function renderTopFreq(freq='month'){
   rows.sort((a,b)=> b.dep - a.dep);
   const top10=rows.slice(0,10);
   const grid=$id('gridTopFreq'); if(!grid) return;
+  clearSkeletonGrid('gridTopFreq');
   grid.innerHTML = top10.map((r,i)=>`
     <div class="lb-item">
       <div class="lb-h">#${i+1} ${formatAccountMasked(r.acc)}</div>
@@ -571,14 +574,14 @@ async function renderTopFreq(freq='month'){
 }
 
 document.addEventListener('DOMContentLoaded', ()=>{
-  function setBalPeriod(freq){
+  function setBalPeriod(freq){ showSkeletonGrid('gridTopBal', 8);
     $id('btnBalWeek')?.classList.toggle('btn-primary', freq==='week');
     $id('btnBalWeek')?.classList.toggle('btn-primary-outline', freq!=='week');
     $id('btnBalMonth')?.classList.toggle('btn-primary', freq==='month');
     $id('btnBalMonth')?.classList.toggle('btn-primary-outline', freq!=='month');
     renderTopBal(freq);
   }
-  function setFreqPeriod(freq){
+  function setFreqPeriod(freq){ showSkeletonGrid('gridTopFreq', 8);
     $id('btnFreqWeek')?.classList.toggle('btn-primary', freq==='week');
     $id('btnFreqWeek')?.classList.toggle('btn-primary-outline', freq!=='week');
     $id('btnFreqMonth')?.classList.toggle('btn-primary', freq==='month');
@@ -601,3 +604,34 @@ document.addEventListener('DOMContentLoaded', ()=>{
     try{ renderFeaturedMonthly(); }catch(e){}
   }
 });
+
+
+// v6.6.9: skeleton helpers
+function showSkeletonGrid(id, n=6, itemClass='lb-item'){
+  const el=$id(id); if(!el) return;
+  el.classList.add('sk-grid');
+  el.innerHTML = Array.from({length:n}).map(()=>`<div class="${itemClass} sk" style="height:72px;border-radius:12px"></div>`).join('');
+}
+function clearSkeletonGrid(id){
+  const el=$id(id); if(!el) return;
+  el.classList.remove('sk-grid');
+}
+
+
+
+// v6.6.9: Mini Tips animated auto-rotate
+(function(){
+  const change = ()=>{
+    const el=$id('miniTip'); if(!el || !window.MINI_TIPS) return;
+    el.classList.add('fade-out');
+    setTimeout(()=>{
+      const idx=Math.floor(Math.random()*window.MINI_TIPS.length);
+      el.textContent = window.MINI_TIPS[idx];
+      el.classList.remove('fade-out');
+    }, 220);
+  };
+  document.addEventListener('DOMContentLoaded', ()=>{
+    try{ setInterval(change, 12000); }catch(e){}
+  });
+})();
+
