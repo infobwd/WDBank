@@ -402,3 +402,79 @@ document.addEventListener('DOMContentLoaded', ()=>{
     try{ computeMonthlyDeltaCard(); computeClassDeltaTop4(); }catch(e){}
   }
 });
+
+
+// v6.6.8: Highlight accounts (2 conditions): deposit above monthly school avg AND no withdrawal in current month
+function computeHighlightTop2(){
+  try{
+    const now=new Date(); const {start,end}=monthRange(now);
+    const txAll = (window.TX||[]);
+
+    // Count deposits per account (month) + record class
+    const depCount = new Map();       // acc -> count
+    const accClass = new Map();       // acc -> class/room
+    const withdrewThisMonth = new Set(); // acc
+
+    txAll.forEach(r=>{
+      const d = parseThaiDate(r['วันที่']); if(!d) return;
+      const acc = String(r['บัญชี']||r['รหัสนักเรียน']||'').trim(); if(!acc) return;
+      const cls = String(r['ชั้น']||r['ห้อง']||'ไม่ระบุ');
+      if (inRange(d,start,end)){
+        if (String(r['รายการ'])==='ฝาก'){
+          depCount.set(acc, (depCount.get(acc)||0)+1);
+          if(!accClass.has(acc)) accClass.set(acc, cls);
+        } else if (String(r['รายการ'])==='ถอน'){
+          withdrewThisMonth.add(acc);
+          if(!accClass.has(acc)) accClass.set(acc, cls);
+        }
+      }
+    });
+
+    // School average (month) = mean of deposit counts among accounts that have >=1 deposit this month
+    let sum=0, n=0;
+    depCount.forEach(v=>{ sum+=v; n+=1; });
+    const baseline = n? (sum/n) : 0;
+
+    // Candidates: deposit count > baseline and no withdraw this month
+    const rows = [];
+    depCount.forEach((cnt, acc)=>{
+      if (cnt > baseline && !withdrewThisMonth.has(acc)){
+        rows.push({ acc, cls: accClass.get(acc)||'ไม่ระบุ', cnt, over: baseline ? ((cnt-baseline)/baseline*100) : 0 });
+      }
+    });
+    // Sort by deposit count desc, then % over baseline
+    rows.sort((a,b)=> b.cnt - a.cnt || b.over - a.over);
+
+    const grid = $id('highlightGrid'); const note=$id('highlightNote');
+    if(!grid) return;
+    grid.innerHTML='';
+
+    if (rows.length===0){
+      if (note){ note.innerHTML = 'ยังไม่มีข้อมูลที่เข้าเงื่อนไขในเดือนนี้'; }
+      return;
+    }else{
+      if (note){ note.innerHTML = 'เงื่อนไข: <b>ฝากบ่อยกว่าค่าเฉลี่ยของโรงเรียน (เดือนนี้)</b> และ <b>ไม่มีรายการถอนในเดือนปัจจุบัน</b>'; }
+    }
+
+    // Show top 3 (can adjust if needed)
+    rows.slice(0,3).forEach(r=>{
+      const el = document.createElement('div');
+      el.className='hi-item';
+      el.innerHTML = `<div class="hi-h">บัญชี ${formatAccountMasked(r.acc)}</div>
+        <div class="hi-sub">ชั้น ${r.cls}</div>
+        <div class="hi-sub">จำนวนครั้งฝากเดือนนี้: <b>${r.cnt}</b> ครั้ง</div>
+        <div class="hi-kpi">มากกว่าเฉลี่ยทั้งโรงเรียน ~ ${(isFinite(r.over)? (r.over>=0? '+':'')+r.over.toFixed(0):'0')}%</div>`;
+      grid.appendChild(el);
+    });
+  }catch(e){ console.warn('computeHighlightTop2', e); }
+}
+
+// hook after TX ready
+document.addEventListener('DOMContentLoaded', ()=>{
+  if (typeof ensureTX === 'function') {
+    ensureTX().then(()=>{ try{ computeHighlightTop2(); }catch(e){} });
+  } else {
+    try{ computeHighlightTop2(); }catch(e){}
+  }
+});
+
