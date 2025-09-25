@@ -439,3 +439,58 @@ async function ensureTX(){
   return window.TX;
 }
 
+
+
+// v6.6.4: Thai date range label + tooltip for Monthly Delta
+function thaiMonthRangeLabel(range){
+  try{
+    const s = new Date(range.start);
+    const e = new Date(range.end); e.setDate(e.getDate()-1); // end is exclusive
+    if (s.getMonth()===e.getMonth() && s.getFullYear()===e.getFullYear()){
+      // "1–30 กันยายน 2568"
+      const monthYear = e.toLocaleDateString('th-TH',{month:'long', year:'numeric'});
+      return `${s.getDate()}–${e.getDate()} ${monthYear}`;
+    }else{
+      // cross-month fallback
+      const S = s.toLocaleDateString('th-TH',{day:'numeric', month:'short'});
+      const E = e.toLocaleDateString('th-TH',{day:'numeric', month:'short', year:'numeric'});
+      return `${S} – ${E}`;
+    }
+  }catch(_){ return '-'; }
+}
+
+// augment computeMonthlyDeltaCard to also set date ranges
+const __old_computeMonthlyDeltaCard = (typeof computeMonthlyDeltaCard==='function') ? computeMonthlyDeltaCard : null;
+computeMonthlyDeltaCard = function(){
+  try{
+    const now=new Date(); 
+    const curr=monthRange(now); 
+    const prev=monthRange(prevMonth(now));
+    // set ranges for UI
+    setText('rangeThisMonth', thaiMonthRangeLabel(curr));
+    setText('rangePrevMonth', thaiMonthRangeLabel(prev));
+  }catch(e){}
+  // call original logic
+  if(__old_computeMonthlyDeltaCard){ try{ __old_computeMonthlyDeltaCard(); }catch(e){} }
+};
+
+// tooltip (info) for formula explanation
+document.addEventListener('DOMContentLoaded', ()=>{
+  $id('deltaInfo')?.addEventListener('click', ()=>{
+    const html = [
+      '<div style="text-align:left;line-height:1.6">',
+      '<b>สูตรที่ใช้</b><br/>',
+      '1) นับเฉพาะรายการ <b>“ฝาก”</b> ของเดือนนี้และเดือนก่อน<br/>',
+      '2) หา <b>ค่าเฉลี่ยจำนวนครั้งฝากต่อบัญชี</b> ของแต่ละเดือน (เฉพาะบัญชีที่มีฝากในเดือนนั้น)<br/>',
+      '3) เปอร์เซ็นต์เปลี่ยนแปลง = <code>((เฉลี่ยเดือนนี้ − ค่าเฉลี่ยอ้างอิง) / ค่าเฉลี่ยอ้างอิง) × 100</code><br/>',
+      'ตัวอย่าง: ถ้าเดือนก่อนเฉลี่ย 4 ครั้ง/บัญชี และเดือนนี้เฉลี่ย 5 ครั้ง/บัญชี → (5−4)/4 ×100 = <b>+25%</b>',
+      '</div>'
+    ].join('');
+    if (typeof Swal!=='undefined' && Swal.fire){
+      Swal.fire({title:'วิธีคำนวณ', html, icon:'info'});
+    }else{
+      alert('วิธีคำนวณ:\\n1) นับเฉพาะ “ฝาก”\\n2) ค่าเฉลี่ยจำนวนครั้งฝากต่อบัญชี\\n3) ((เดือนนี้−เดือนก่อน)/เดือนก่อน)×100');
+    }
+  });
+});
+

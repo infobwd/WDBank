@@ -131,3 +131,8 @@ button{font-family:inherit}
 .charts{display:grid;grid-template-columns:1fr;gap:1rem}
 @media(min-width:760px){ .charts{grid-template-columns:1fr 1fr} }
 
+/* v6.6.4 Monthly Delta range + tooltip */
+.small{font-size:.85rem}
+.btn.xs{padding:.2rem .4rem;font-size:.78rem;line-height:1;border-radius:10px}
+.delta-range{margin-top:.5rem}
+
