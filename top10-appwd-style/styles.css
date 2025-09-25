@@ -139,3 +139,19 @@ button{font-family:inherit}
 }
 .cd-count{color:#334155;font-size:.85rem;margin-top:.2rem}
 
+/* v6.6.8 Featured + Leaderboard */
+.feat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.8rem;margin-top:.5rem}
+.feat-item{border:1px solid #e5e7eb;border-radius:12px;padding:.8rem;background:#fff}
+.feat-h{font-weight:800;color:#0f172a}
+.feat-sub{color:#64748b;font-size:.9rem;margin-top:.2rem}
+.lb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.8rem}
+.lb-item{border:1px solid #e5e7eb;border-radius:12px;padding:.7rem .8rem;background:#fff}
+.lb-h{font-weight:800;color:#0f172a}
+.lb-sub{color:#64748b;font-size:.9rem;margin-top:.15rem}
+.btn-primary{background:#0ea5e9;color:white;border:1px solid #0284c7}
+.btn-primary-outline{background:#fff;color:#0369a1;border:1px solid #93c5fd}
+@media (max-width:640px){
+  .feat-grid{grid-template-columns:repeat(2,1fr)}
+  .lb-grid{grid-template-columns:repeat(1,1fr)}
+}
+
