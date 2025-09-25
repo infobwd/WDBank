@@ -32,7 +32,7 @@
 
   <main class="container pb-safe">
     <!-- Home -->
-    <section id="view-home" class="view show ">
+    <section id="view-home" class="view show show ">
       <section class="card">
         <div class="section-head">
           <div>
@@ -205,6 +205,13 @@
 
   <section class="card">
     <div class="section-head">
+      <div class="title">ลีดเดอร์บอร์ดระดับชั้น</div>
+    </div>
+    <div id="lb-class-grid" class="lb-grid"></div>
+  </section>
+
+<section class="card">
+    <div class="section-head">
       <div class="title">TOP 10 ยอดเงินสูงสุด <span class="muted small">(และฝาก ≥ ค่าเฉลี่ย)</span></div>
       <div class="actions wrap">
         <div class="btn-group" role="group" aria-label="period-1">
@@ -215,6 +222,20 @@
     </div>
     <div id="gridTopBal" class="lb-grid sk-grid"></div>
   </section>
+
+  <section class="card">
+    <div class="section-head">
+      <div class="title">TOP 10 บัญชีฝากถี่มาก</div>
+      <div class="actions wrap">
+        <div class="btn-group" role="group" aria-label="period-2">
+          <button id="btnFreqWeek" class="btn sm btn-primary-outline">สัปดาห์นี้</button>
+          <button id="btnFreqMonth" class="btn sm btn-primary">เดือนนี้</button>
+        </div>
+      </div>
+    </div>
+    <div id="gridTopFreq" class="lb-grid sk-grid"></div>
+  </section>
+</section>
 
   <section class="card">
     <div class="section-head">
