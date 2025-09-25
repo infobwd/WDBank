@@ -113,7 +113,7 @@ button{font-family:inherit}
   .btn.sm{padding:.35rem .5rem; font-size:.82rem}
 }
 
-/* v6.6.6 Cards + Delta + Class Top-4 */
+/* v6.6.7 placement + responsive + common */
 .mini-tip{font-size:1.05rem;font-weight:700;color:#0f172a}
 .delta-wrap{display:grid;grid-template-columns:repeat(2,1fr);gap:.8rem}
 .delta-box{border:1px dashed #cbd5e1;border-radius:12px;padding:.6rem .8rem;background:#fff}
@@ -130,4 +130,12 @@ button{font-family:inherit}
 .cd-h{font-weight:800;color:#0f172a}
 .cd-sub{color:#64748b;font-size:.9rem;margin-top:.2rem}
 .pct-up{color:#059669;font-weight:800}
+@media (max-width: 640px){
+  .cd-grid{grid-template-columns: repeat(2, 1fr);}
+}
+@media (min-width: 1024px){
+  #card-class-delta .collapse{display:block !important}
+  #card-class-delta .actions #btnToggleClassDelta{display:none}
+}
+.cd-count{color:#334155;font-size:.85rem;margin-top:.2rem}
 

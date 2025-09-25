@@ -58,6 +58,37 @@
   <div id="miniTip" class="mini-tip sk sk-title">กำลังโหลดเคล็ดลับ…</div>
 </section>
 
+<!-- การ์ด “สรุปสัปดาห์นี้” (placeholder if not exist) -->
+<section class="card">
+  <div class="section-head">
+    <div class="title">สรุปสัปดาห์นี้</div>
+  </div>
+  <div class="muted small">สรุปภาพรวมการฝาก/ถอนของสัปดาห์ (บล็อกเดิมของพี่จะอยู่ก่อนการ์ดถัดไป)</div>
+</section>
+
+<!-- Class Delta Top-4 -->
+<section id="card-class-delta" class="card">
+  <div class="section-head">
+    <div class="title">รายชั้น: เดือนนี้ออมบ่อยกว่าค่าเฉลี่ย <span class="muted small">(Top 4)</span></div>
+    <div class="actions wrap">
+      <button id="btnToggleClassDelta" class="btn btn-ghost sm">
+        <i class="fa-solid fa-chevron-down"></i> แสดง/ซ่อน
+      </button>
+      <button id="btnClassDeltaInfo" class="btn btn-ghost xs" title="อธิบายสูตรรายชั้น">
+        <i class="fa-solid fa-circle-info"></i>
+      </button>
+    </div>
+  </div>
+  <div id="classDeltaCard" class="collapse hidden">
+    <div id="classDeltaDesc" class="muted small">
+      เปรียบเทียบ <b>ค่าเฉลี่ยจำนวนครั้งฝากต่อบัญชี</b> ของแต่ละชั้น กับ <b>ค่าเฉลี่ยทั้งโรงเรียน</b> (เฉพาะเดือนนี้)
+    </div>
+    <div id="classDeltaGrid" class="cd-grid"></div>
+  </div>
+</section>
+
+
+
 <!-- การ์ด “เดือนนี้ออมบ่อยกว่าค่าเฉลี่ยของโรงเรียน” -->
 <section class="card">
   <div class="section-head">
@@ -170,29 +201,7 @@
     </section>
 
     <!-- Leaderboard -->
-    
-<!-- Class Delta Top-4 (hidden by default) -->
-<section class="card">
-  <div class="section-head">
-    <div class="title">รายชั้น: เดือนนี้ออมบ่อยกว่าค่าเฉลี่ย <span class="muted small">(Top 4)</span></div>
-    <div class="actions wrap">
-      <button id="btnToggleClassDelta" class="btn btn-ghost sm">
-        <i class="fa-solid fa-chevron-down"></i> แสดง/ซ่อน
-      </button>
-      <button id="btnClassDeltaInfo" class="btn btn-ghost xs" title="อธิบายสูตรรายชั้น">
-        <i class="fa-solid fa-circle-info"></i>
-      </button>
-    </div>
-  </div>
-  <div id="classDeltaCard" class="collapse hidden">
-    <div id="classDeltaDesc" class="muted small">
-      เปรียบเทียบ <b>ค่าเฉลี่ยจำนวนครั้งฝากต่อบัญชี</b> ของแต่ละชั้น กับ <b>ค่าเฉลี่ยทั้งโรงเรียน</b> (เฉพาะเดือนนี้)
-    </div>
-    <div id="classDeltaGrid" class="cd-grid"></div>
-  </div>
-</section>
-
-<section id="view-leaderboard" class="view">
+    <section id="view-leaderboard" class="view">
       <section class="card">
         <div class="section-head">
           <div class="title"><i class="fa-solid fa-ranking-star"></i> ลีดเดอร์บอร์ดระดับชั้น

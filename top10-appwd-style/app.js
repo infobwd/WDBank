@@ -213,7 +213,6 @@ document.addEventListener('DOMContentLoaded', function(){ loadAll().then(()=>{ s
 console.log('WDBank v6.4.2 loaded');
 
 
-
 // ==== HELPERS ====
 if (typeof window.$id === 'undefined') {
   window.$id = (id)=>document.getElementById(id);
@@ -227,27 +226,12 @@ if (typeof window.$id === 'undefined') {
   window.inRange = (d,s,e)=> d && d>=s && d<e;
   window.toNumber = (v)=> Number(String(v??'').replace(/[, ]/g,''));
   window.fmtNumber = (v)=>{ const n=toNumber(v); return isFinite(n)? n.toLocaleString('th-TH', {maximumFractionDigits:2}) : String(v??''); };
-  window.formatAccountMasked = (val)=>{ const raw=String(val??'').replace(/[ ,]/g,''); if(!raw) return '-'; return raw.slice(0,4)+' ••'; };
+  window.formatAccountMasked = (val)=>{ const raw=String(val??'').replace(/[ ,]/g,''); if(!raw) return '-'; return raw.slice(0,4)+' \u2022\u2022'; };
 }
-
-
-
-// ==== Mini Tips ====
-window.MINI_TIPS = window.MINI_TIPS || [
-  'ออมเล็ก ๆ แต่บ่อย ๆ ดีต่อวินัยมากกว่าครั้งละก้อนใหญ่ 💪',
-  'ตั้งเวลาออมประจำ เช่น จันทร์/พฤ. หลังเข้าแถว 5 นาที ⏰',
-  'ตั้งเป้าหมายสั้น ๆ รายสัปดาห์ จะเห็นความก้าวหน้าเร็วขึ้น ✨',
-  'ออมก่อนใช้: แยกเงินออมทันทีที่ได้รับเงิน 💼',
-  'ชวนเพื่อนทั้งห้องออมพร้อมกัน สนุกและมีแรงใจขึ้น 🤝'
-];
-function setMiniTip(){ const el=$id('miniTip'); if(!el) return; const idx=Math.floor(Date.now()/86400000)%MINI_TIPS.length; el.textContent=MINI_TIPS[idx]; el.classList.remove('sk','sk-title'); }
-$id('btnNextTip')?.addEventListener('click', ()=>{ const el=$id('miniTip'); if(el) el.textContent = MINI_TIPS[Math.floor(Math.random()*MINI_TIPS.length)]; });
-
 
 
 // ==== Data Loader ====
 window.SHEET_TX = window.SHEET_TX || "https://opensheet.elk.sh/1EZtfvb0h9wYZbRFTGcm0KVPScnyu6B-boFG6aMpWEUo/Sortรายการฝากและถอน";
-
 async function ensureTX(){
   try{
     if (Array.isArray(window.TX) && window.TX.length) return window.TX;
@@ -262,8 +246,30 @@ async function ensureTX(){
 }
 
 
+// ==== Mini Tips ====
+window.MINI_TIPS = window.MINI_TIPS || [
+  'ออมเล็ก ๆ แต่บ่อย ๆ ดีต่อวินัยมากกว่าครั้งละก้อนใหญ่ 💪',
+  'ตั้งเวลาออมประจำ เช่น จันทร์/พฤ. หลังเข้าแถว 5 นาที ⏰',
+  'ตั้งเป้าหมายสั้น ๆ รายสัปดาห์ จะเห็นความก้าวหน้าเร็วขึ้น ✨',
+  'ออมก่อนใช้: แยกเงินออมทันทีที่ได้รับเงิน 💼',
+  'ชวนเพื่อนทั้งห้องออมพร้อมกัน สนุกและมีแรงใจขึ้น 🤝'
+];
+function setMiniTip(){ const el=$id('miniTip'); if(!el) return; const idx=Math.floor(Date.now()/86400000)%MINI_TIPS.length; el.textContent=MINI_TIPS[idx]; el.classList.remove('sk','sk-title'); }
+// auto-rotate every 12s
+document.addEventListener('DOMContentLoaded', ()=>{
+  try{
+    setMiniTip();
+    setInterval(()=>{
+      const el=$id('miniTip');
+      if(!el || !window.MINI_TIPS) return;
+      const idx=Math.floor(Math.random()*window.MINI_TIPS.length);
+      el.textContent=window.MINI_TIPS[idx];
+    }, 12000);
+  }catch(e){}
+});
 
-// ==== Monthly Delta ====
+
+// ==== Monthly Delta (short month) ====
 function computeMonthlyDeltaCard(){
   try{
     const now=new Date(); const curr=monthRange(now); const prev=monthRange(prevMonth(now));
@@ -283,11 +289,8 @@ function computeMonthlyDeltaCard(){
     setText('deltaPct',(pct>=0?'+':'')+pct.toFixed(0)+'%');
     setText('avgThisMonth', isFinite(avgNow)? avgNow.toFixed(2):'-');
     setText('avgBaseline',  isFinite(avgPrev)? avgPrev.toFixed(2):'—');
-    ['deltaPct','avgThisMonth','avgBaseline'].forEach(id=>$id(id)?.classList.remove('sk','sk-title'));
-    // ranges short month
-    const label = (range)=>{
-      const s = new Date(range.start), e = new Date(range.end); e.setDate(e.getDate()-1);
-      if (s.getMonth()===e.getMonth() && s.getFullYear()===e.getFullYear()){
+    const label=(range)=>{ const s=new Date(range.start), e=new Date(range.end); e.setDate(e.getDate()-1);
+      if(s.getMonth()===e.getMonth() && s.getFullYear()===e.getFullYear()){
         const monthYear = e.toLocaleDateString('th-TH',{month:'short', year:'numeric'});
         return `${s.getDate()}–${e.getDate()} ${monthYear}`;
       } else {
@@ -296,11 +299,10 @@ function computeMonthlyDeltaCard(){
         return `${S} – ${E}`;
       }
     };
-    setText('rangeThisMonth', label(curr));
-    setText('rangePrevMonth', label(prev));
+    setText('rangeThisMonth', label(curr)); setText('rangePrevMonth', label(prev));
+    ['deltaPct','avgThisMonth','avgBaseline'].forEach(id=>$id(id)?.classList.remove('sk','sk-title'));
   }catch(e){ console.warn('computeMonthlyDeltaCard error', e); }
 }
-// Tooltip for formula
 document.addEventListener('DOMContentLoaded', ()=>{
   $id('deltaInfo')?.addEventListener('click', ()=>{
     const html = [
@@ -321,8 +323,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 });
 
 
-
-// v6.6.6: Class Delta Top-4 (this month vs school avg), collapsible + tooltip
+// v6.6.7: Class Delta Top-4 (this month vs school avg), responsive + tooltip
 function computeClassDeltaTop4(){
   try{
     const now=new Date(); const {start,end}=monthRange(now);
@@ -347,7 +348,7 @@ function computeClassDeltaTop4(){
       let sum=0, n=0; map.forEach(v=>{ sum+=v; n+=1; });
       const avg = n? (sum/n):0;
       const pct = (baseline>0)? ((avg-baseline)/baseline*100):0;
-      rows.push({cls, avg, pct});
+      rows.push({cls, avg, pct, n});
     });
     rows.sort((a,b)=> b.pct - a.pct || b.avg - a.avg);
     const top4 = rows.slice(0,4);
@@ -358,12 +359,20 @@ function computeClassDeltaTop4(){
       el.className='cd-item';
       el.innerHTML = `<div class="cd-h">ชั้น ${r.cls}</div>
         <div class="cd-sub">เฉลี่ยต่อบัญชี: ${isFinite(r.avg)? r.avg.toFixed(2):'-'} ครั้ง/เดือน</div>
-        <div class="cd-sub">เทียบทั้งโรงเรียน: <span class="pct-up">${(isFinite(r.pct)? (r.pct>=0? '+':'')+r.pct.toFixed(0):'0')}%</span></div>`;
+        <div class="cd-sub">เทียบทั้งโรงเรียน: <span class="pct-up">${(isFinite(r.pct)? (r.pct>=0? '+':'')+r.pct.toFixed(0):'0')}%</span></div>
+        <div class="cd-count">จำนวนบัญชีที่มีการฝากเดือนนี้: <b>${r.n}</b> บัญชี</div>`;
       grid.appendChild(el);
     });
   }catch(e){ console.warn('computeClassDeltaTop4', e); }
 }
-
+// expand on large screens
+function expandClassDeltaOnLarge(){
+  try{
+    if (window.matchMedia && window.matchMedia('(min-width: 1024px)').matches){
+      const box=$id('classDeltaCard'); if(box){ box.classList.remove('hidden'); }
+    }
+  }catch(e){}
+}
 document.addEventListener('DOMContentLoaded', ()=>{
   $id('btnToggleClassDelta')?.addEventListener('click', ()=>{
     const box=$id('classDeltaCard'); if(!box) return;
@@ -373,18 +382,20 @@ document.addEventListener('DOMContentLoaded', ()=>{
     const html = [
       '<div style="text-align:left;line-height:1.6">',
       '<b>วิธีคำนวณ (รายชั้น)</b><br/>',
-      '• ใช้เฉพาะรายการ <b>“ฝาก”</b> ของเดือนนี้<br/>',
-      '• คำนวณ <b>ค่าเฉลี่ยจำนวนครั้งฝากต่อบัญชี</b> ของแต่ละชั้น (เฉพาะบัญชีที่มีฝาก)<br/>',
+      '• ใช้เฉพาะรายการ <b>“ฝาก”</b> ของเดือนนี้เท่านั้น<br/>',
+      '• คำนวณ <b>ค่าเฉลี่ยจำนวนครั้งฝากต่อบัญชี</b> ของแต่ละชั้น (เฉพาะบัญชีที่มีฝากในเดือนนั้น)<br/>',
       '• เทียบกับ <b>ค่าเฉลี่ยทั้งโรงเรียน</b> (เดือนนี้) → แสดง % มาก/น้อยกว่า baseline<br/>',
-      '• แสดง Top 4 ชั้นที่ “มากกว่า baseline” สูงที่สุด',
+      '• แสดง Top 4 ชั้นที่ “มากกว่า baseline” สูงที่สุด พร้อม <b>จำนวนบัญชี</b> ของชั้นนั้น',
       '</div>'
     ].join('');
     if (typeof Swal!=='undefined' && Swal.fire){
       Swal.fire({title:'สูตรรายชั้น', html, icon:'info'});
     }else{
-      alert('รายชั้น: ใช้เฉพาะฝากเดือนนี้ → เฉลี่ยครั้ง/บัญชีต่อชั้น → เทียบกับเฉลี่ยทั้งโรงเรียน (เดือนนี้)');
+      alert('รายชั้น: ฝากเดือนนี้ → เฉลี่ยครั้ง/บัญชีต่อชั้น → เทียบเฉลี่ยทั้งโรงเรียน (เดือนนี้) → Top4');
     }
   });
+  expandClassDeltaOnLarge();
+  window.addEventListener('resize', expandClassDeltaOnLarge);
   if (typeof ensureTX === 'function') {
     ensureTX().then(()=>{ try{ computeMonthlyDeltaCard(); computeClassDeltaTop4(); }catch(e){} });
   } else {
