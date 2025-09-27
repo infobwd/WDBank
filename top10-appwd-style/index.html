@@ -36,7 +36,7 @@
       <section class="card">
         <div class="section-head">
           <div>
-            <div class="title">ออมก่อนใช้ สร้างวินัยการออม</div>
+            <div class="title">3 บัญชีเด่น (เข้าเงื่อนไขครบทั้ง 3)</div>
             <div class="subtitle">วันที่ <span id="todayThai" class="sk sk-text"></span></div>
           </div>
           <div class="actions">
@@ -75,6 +75,12 @@
 
 
 <!-- การ์ด “สรุปสัปดาห์นี้” (placeholder if not exist) -->
+<section class="card">
+  <div class="section-head">
+    <div class="title">สรุปสัปดาห์นี้</div>
+  </div>
+  <div class="muted small">สรุปภาพรวมการฝาก/ถอนของสัปดาห์ (บล็อกเดิมของพี่จะอยู่ก่อนการ์ดถัดไป)</div>
+</section>
 
 <!-- Class Delta Top-4 -->
 <section id="card-class-delta" class="card">
@@ -122,7 +128,12 @@
       <section class="card">
         <div class="section-head">
           <div class="title">สรุปสัปดาห์นี้</div>
-
+          <div class="actions wrap">
+            <button id="pdf-week" class="btn btn-primary sm"><i class="fa-solid fa-file-pdf"></i> PDF สัปดาห์นี้</button>
+            <button id="pdf-month" class="btn btn-primary sm"><i class="fa-solid fa-file-pdf"></i> PDF เดือนนี้</button>
+            <button id="pdf-classsum" class="btn btn-primary sm"><i class="fa-solid fa-layer-group"></i> PDF คงเหลือรายชั้น</button>
+            <button id="pdf-savings" class="btn btn-primary sm"><i class="fa-solid fa-piggy-bank"></i> PDF ออมสิน</button>
+          </div>
         </div>
         <div class="kpi-grid">
           <div class="kpi"><div class="kpi-h">ฝากสัปดาห์นี้</div><div class="kpi-v sk sk-title" id="kpiDepCount">-</div><div class="kpi-sub sk sk-text" id="kpiDepAmt">-</div></div>
@@ -147,7 +158,10 @@
                 <div class="title">TOP 10 ยอดเงินสูงสุด (และฝาก ≥ ค่าเฉลี่ย)</div>
                 <div class="desc">บัญชีที่มีเงินคงเหลือสูงและจำนวนครั้งฝากไม่น้อยกว่าค่าเฉลี่ยของทั้งโรงเรียน</div>
               </div>
-  
+              <div class="actions wrap">
+                <button id="pdf-amount" class="btn btn-primary sm"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+                <button id="share-amount" class="btn btn-line sm"><i class="fa-brands fa-line"></i> แชร์</button>
+              </div>
             </div>
             <div class="table-wrap">
               <table class="table" id="table-amount"><thead><tr id="th-amount"></tr></thead><tbody id="tb-amount"><tr class="sk"><td class="sk sk-text" colspan="5">กำลังโหลด…</td></tr></tbody></table>
@@ -162,7 +176,10 @@
                 <div class="title">TOP 10 บัญชีฝากถี่มาก</div>
                 <div class="desc">โฟกัสเฉพาะ “ความถี่ในการฝาก” โดยไม่ดูยอดเงินคงเหลือ</div>
               </div>
-
+              <div class="actions wrap">
+                <button id="pdf-frequent" class="btn btn-primary sm"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+                <button id="share-frequent" class="btn btn-line sm"><i class="fa-brands fa-line"></i> แชร์</button>
+              </div>
             </div>
             <div class="table-wrap">
               <table class="table" id="table-frequent"><thead><tr id="th-frequent"></tr></thead><tbody id="tb-frequent"><tr class="sk"><td class="sk sk-text" colspan="5">กำลังโหลด…</td></tr></tbody></table>
@@ -177,7 +194,10 @@
                 <div class="title">TOP 10 ไม่เคยถอน และฝาก ≥ ค่าเฉลี่ย</div>
                 <div class="desc">เหมาะยกย่องการออมระยะยาว ไม่พบรายการถอน และฝากบ่อยไม่น้อยกว่าค่าเฉลี่ย</div>
               </div>
-   
+              <div class="actions wrap">
+                <button id="pdf-depositonly" class="btn btn-primary sm"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+                <button id="share-depositonly" class="btn btn-line sm"><i class="fa-brands fa-line"></i> แชร์</button>
+              </div>
             </div>
             <div class="table-wrap">
               <table class="table" id="table-depositonly"><thead><tr id="th-depositonly"></tr></thead><tbody id="tb-depositonly"><tr class="sk"><td class="sk sk-text" colspan="5">กำลังโหลด…</td></tr></tbody></table>
@@ -296,5 +316,7 @@
   <div id="pdfReport" class="pdf-report" aria-hidden="true"></div>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="./app.js"></script>
+
+<script type="module" src="./gamify-init.js"></script>
 </body>
 </html>
