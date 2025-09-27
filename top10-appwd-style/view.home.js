@@ -4,8 +4,8 @@ import { Reader } from './reader.core.js';
 function el(id){ return document.getElementById(id); }
 function h(html){ const d=document.createElement('div'); d.innerHTML = html.trim(); return d.firstElementChild; }
 
+
 function ensureHomeBlocks(){
-  // Add a container block on Home
   if (!el('homeGamifyReader')){
     const card = h(`<section id="homeGamifyReader" class="rounded-xl shadow-card p-4 bg-white mb-4">
       <div class="flex items-center justify-between flex-wrap gap-2">
@@ -27,6 +27,11 @@ function ensureHomeBlocks(){
     const anchor = document.querySelector('#home, #page-home, main, body');
     anchor?.insertBefore(card, anchor.firstChild);
   }
+  // Hide legacy localStorage Gamify card if present (to avoid "0 คะแนน")
+  const legacy = document.getElementById('homeGamifyCard');
+  if (legacy) legacy.style.display = 'none';
+}
+
 }
 
 function renderClassTable(members){

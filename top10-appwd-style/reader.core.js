@@ -23,35 +23,42 @@ function pointsFromDeposit(amount){
 const isEarlyBird = (d) => getHour(d) < ((window.GAMIFY && window.GAMIFY.EARLY_BIRD_HOUR) ?? 9);
 
 // ===== Inference of columns =====
+
 const colMapCandidates = {
-  datetime: ['เวลา','วันที่','timestamp','date','datetime','เวลา/วันที่','เมื่อ'],
-  userId:   ['รหัส','ไอดี','user','userId','บัญชี','เบอร์','เลขที่'],
-  name:     ['ชื่อ','ชื่อ-สกุล','ผู้ใช้','นักเรียน','student','name'],
-  class:    ['ห้อง','ชั้น','ชั้นเรียน','class','room'],
-  type:     ['ประเภท','ทำรายการ','action','type','ฝาก/ถอน','สถานะ'],
-  amount:   ['จำนวน','จำนวนเงิน','ยอด','ยอดเงิน','amount'],
+  datetime: ['เวลา','วันที่','วันเวลา','timestamp','date','datetime','เวลา/วันที่','เมื่อ'],
+  userId:   ['รหัส','ไอดี','user','userid','บัญชี','เลขที่','เลขนักเรียน','student id','รหัสนักเรียน'],
+  name:     ['ชื่อ','ชื่อ-สกุล','ผู้ใช้','นักเรียน','student','name','ชื่อสกุล','fullname'],
+  first:    ['ชือ','ชื่อ','first','fname','first name','ชื่อหน้า'],
+  last:     ['นามสกุล','สกุล','lname','last name','last'],
+  class:    ['ห้อง','ชั้น','ชั้นเรียน','class','room','ห้องเรียน'],
+  type:     ['ประเภท','ทำรายการ','action','type','ฝาก/ถอน','สถานะ','transaction'],
+  amount:   ['จำนวน','จำนวนเงิน','ยอด','ยอดเงิน','amount','เงิน','มูลค่า'],
 };
+
+function pickKey(keys, candidates){
+  const lower = keys.map(k=>k.toLowerCase().trim());
+  for (const cand of candidates){
+    const idx = lower.findIndex(k=>k.includes(cand.toLowerCase()));
+    if (idx>=0) return keys[idx];
+  }
+  return null;
+}
 
 function inferCols(row){
   const keys = Object.keys(row);
-  const lower = keys.map(k=>k.toLowerCase().trim());
-
-  function findKey(cands){
-    for (const cand of cands){
-      const idx = lower.findIndex(k=>k.includes(cand.toLowerCase()));
-      if (idx>=0) return keys[idx];
-    }
-    return null;
-  }
-  return {
-    datetime: findKey(colMapCandidates.datetime),
-    userId:   findKey(colMapCandidates.userId),
-    name:     findKey(colMapCandidates.name),
-    class:    findKey(colMapCandidates.class),
-    type:     findKey(colMapCandidates.type),
-    amount:   findKey(colMapCandidates.amount),
+  const m = {
+    datetime: pickKey(keys, colMapCandidates.datetime),
+    userId:   pickKey(keys, colMapCandidates.userId),
+    name:     pickKey(keys, colMapCandidates.name),
+    first:    pickKey(keys, colMapCandidates.first),
+    last:     pickKey(keys, colMapCandidates.last),
+    class:    pickKey(keys, colMapCandidates.class),
+    type:     pickKey(keys, colMapCandidates.type),
+    amount:   pickKey(keys, colMapCandidates.amount),
   };
+  return m;
 }
+
 
 // ===== Fetch + compute =====
 async function fetchRows(){
@@ -66,20 +73,17 @@ function normalize(rows){
   const inferred = inferCols(rows[0]);
   const out = [];
   for (const r of rows){
-    const t = (inferred.type && String(r[inferred.type]).trim()) || '';
-    const type = /ถอน|withdraw/i.test(t) ? 'withdraw' : 'deposit'; // default deposit
+    // Compose name
+    let nameRaw = (inferred.name ? String(r[inferred.name]).trim() : '');
+    const first = inferred.first ? String(r[inferred.first]).trim() : '';
+    const last  = inferred.last  ? String(r[inferred.last]).trim()  : '';
+    if (!nameRaw && (first || last)) nameRaw = (first + ' ' + last).trim();
 
-    const amtRaw = inferred.amount ? String(r[inferred.amount]).replace(/[,\s]/g,'') : '0';
-    const amount = Number(amtRaw) || 0;
-
-    const dtStr = inferred.datetime ? r[inferred.datetime] : null;
-    const dt = dtStr ? toLocalDate(dtStr) : null;
-
-    out.push({
+    
       datetime: dt,
       ymd: dt ? toYMD(dt) : null,
       userId: inferred.userId ? String(r[inferred.userId]).trim() : null,
-      name: inferred.name ? String(r[inferred.name]).trim() : null,
+      name: nameRaw || null,
       class: inferred.class ? String(r[inferred.class]).trim() : null,
       type, amount,
     });
@@ -128,7 +132,7 @@ function computeStats(entries){
   // ต่อห้อง
   const byClass = new Map();
   for (const [,u] of byUser){
-    const key = u.class || 'ไม่ระบุห้อง';
+    const key = (u.class && String(u.class).trim()) || 'ไม่ระบุห้อง';
     if (!byClass.has(key)) byClass.set(key, { class:key, totalPoints:0, avgStreak:0, members:[] });
     byClass.get(key).members.push(u);
   }
